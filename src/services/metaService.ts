@@ -64,7 +64,7 @@ class MetaService {
   }
 
   private generatePreviewImageUrl(report: Report, statistics: ReportStatistics): string {
-    const baseUrl = window.location.origin + window.location.pathname.replace(/\/$/, '')
+    const baseUrl = 'https://anykeyer.github.io/NewsStat'
     
     const params = new URLSearchParams({
       title: report.title,
@@ -72,6 +72,7 @@ class MetaService {
       positive: statistics.positiveNewsCount.toString(),
       negative: statistics.negativeNewsCount.toString(),
       growth: statistics.averageGrowth.toFixed(1),
+      decline: statistics.averageDecline.toFixed(1),
       meta: `Создано: ${report.createdBy || 'Аналитик'} • ${new Intl.DateTimeFormat('ru-RU', {
         day: '2-digit',
         month: '2-digit',
@@ -79,7 +80,7 @@ class MetaService {
       }).format(report.createdAt)}`
     })
     
-    return `${baseUrl}/preview.html?${params.toString()}`
+    return `${baseUrl}/report-preview.html?${params.toString()}`
   }
 
   resetToDefault(): void {

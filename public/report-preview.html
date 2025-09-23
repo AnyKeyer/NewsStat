@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Report Preview</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: white;
+            width: 1200px;
+            height: 630px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        
+        .preview-container {
+            width: 1120px;
+            height: 550px;
+            padding: 40px;
+            box-sizing: border-box;
+            background: rgba(30, 41, 59, 0.8);
+            border-radius: 24px;
+            border: 2px solid #334155;
+            position: relative;
+            backdrop-filter: blur(10px);
+        }
+        
+        .header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        
+        .logo {
+            font-size: 32px;
+            font-weight: 700;
+            color: #3b82f6;
+            margin-right: 16px;
+        }
+        
+        .site-name {
+            font-size: 18px;
+            color: #cbd5e1;
+            opacity: 0.8;
+        }
+        
+        .report-title {
+            font-size: 36px;
+            font-weight: 700;
+            line-height: 1.2;
+            margin-bottom: 24px;
+            color: #f1f5f9;
+            max-height: 120px;
+            overflow: hidden;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 32px;
+            margin-bottom: 32px;
+        }
+        
+        .stat-item {
+            text-align: center;
+            padding: 20px;
+            background: rgba(51, 65, 85, 0.6);
+            border-radius: 16px;
+            border: 1px solid #475569;
+        }
+        
+        .stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        
+        .stat-label {
+            font-size: 14px;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .positive {
+            color: #10b981;
+        }
+        
+        .negative {
+            color: #ef4444;
+        }
+        
+        .meta-info {
+            position: absolute;
+            bottom: 40px;
+            left: 40px;
+            right: 40px;
+            font-size: 16px;
+            color: #64748b;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .default-preview {
+            text-align: center;
+        }
+        
+        .default-preview .logo {
+            font-size: 48px;
+            margin: 0 0 20px 0;
+        }
+        
+        .default-preview .title {
+            font-size: 42px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: #f1f5f9;
+        }
+        
+        .default-preview .description {
+            font-size: 24px;
+            color: #cbd5e1;
+            line-height: 1.4;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="preview-container" id="preview">
+        <!-- Контент будет сгенерирован JavaScript -->
+    </div>
+    
+    <script>
+        function getUrlParams() {
+            const params = new URLSearchParams(window.location.search);
+            return {
+                title: params.get('title') || '',
+                total: params.get('total') || '0',
+                positive: params.get('positive') || '0',
+                negative: params.get('negative') || '0',
+                growth: params.get('growth') || '0',
+                decline: params.get('decline') || '0',
+                meta: params.get('meta') || '',
+                isDefault: params.get('default') === 'true'
+            };
+        }
+        
+        function renderPreview() {
+            const params = getUrlParams();
+            const container = document.getElementById('preview');
+            
+            if (params.isDefault) {
+                // Дефолтное превью для главной страницы
+                container.innerHTML = `
+                    <div class="default-preview">
+                        <div class="logo">📊</div>
+                        <div class="title">News Analysis</div>
+                        <div class="description">
+                            Профессиональный анализ влияния новостей на курсы криптовалют.<br>
+                            Детальная статистика роста и падения токенов.
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Превью для конкретного отчета
+            const totalNews = parseInt(params.total);
+            const positiveNews = parseInt(params.positive);
+            const negativeNews = parseInt(params.negative);
+            const avgGrowth = parseFloat(params.growth);
+            const avgDecline = Math.abs(parseFloat(params.decline));
+            
+            container.innerHTML = `
+                <div class="header">
+                    <div class="logo">📊</div>
+                    <div class="site-name">News Analysis</div>
+                </div>
+                
+                <div class="report-title">${params.title}</div>
+                
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-value">${totalNews}</div>
+                        <div class="stat-label">📈 Всего новостей</div>
+                    </div>
+                    
+                    <div class="stat-item">
+                        <div class="stat-value positive">+${avgGrowth.toFixed(1)}%</div>
+                        <div class="stat-label">💰 Средний рост (${positiveNews})</div>
+                    </div>
+                    
+                    <div class="stat-item">
+                        <div class="stat-value negative">${avgDecline.toFixed(1)}%</div>
+                        <div class="stat-label">📉 Средний спад (${negativeNews})</div>
+                    </div>
+                </div>
+                
+                <div class="meta-info">
+                    <div>${params.meta}</div>
+                    <div>anykeyer.github.io/NewsStat</div>
+                </div>
+            `;
+        }
+        
+        // Генерируем превью при загрузке страницы
+        renderPreview();
+    </script>
+</body>
+</html>
