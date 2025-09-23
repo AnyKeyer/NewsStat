@@ -5,19 +5,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>News Analysis - Redirecting...</title>
     <script>
-      // GitHub Pages SPA redirect script
-      // Перенаправляет /NewsStat/report/id на /NewsStat/#/report/id для совместимости
+      // GitHub Pages SPA redirect script для history API роутинга
       (function(l) {
-        if (l.search[1] === '/' ) {
-          var decoded = sessionStorage.redirect.split('?')[1];
-          if (decoded) {
-            sessionStorage.redirect = '';
-            var url = l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') +
-                     decoded + (l.hash ? l.hash : '');
-            l.replace(url);
+        var redirect = sessionStorage.getItem('pathToRedirect');
+        if (redirect) {
+          sessionStorage.removeItem('pathToRedirect');
+          location.replace('/NewsStat/' + redirect);
+          return;
+        }
+        
+        // Обрабатываем прямые переходы на страницы отчетов
+        var path = l.pathname;
+        if (path.startsWith('/NewsStat/')) {
+          var route = path.replace('/NewsStat', '');
+          if (route && route !== '/') {
+            // Сохраняем путь и редиректим на главную
+            sessionStorage.setItem('redirectPath', route);
+            location.replace('/NewsStat/');
           }
         }
-      }(window.location))
+      })(window.location);
     </script>
 </head>
 <body>

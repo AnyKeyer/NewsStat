@@ -364,38 +364,43 @@
             `;
         }
         
-        // Обновляем существующий контент на основе URL параметров
-        function updateContentFromURL() {
+        // Простое обновление контента на основе URL параметров
+        try {
             const params = getUrlParams();
             
             if (params.title && params.title !== 'Анализ криптоновостей') {
                 // Обновляем для конкретного отчета
-                document.getElementById('report-title').textContent = params.title;
-                document.getElementById('report-id').textContent = `ID: ${params.id}`;
-                document.getElementById('report-id').style.display = 'inline-block';
-                document.getElementById('description').textContent = params.description;
+                const titleEl = document.getElementById('report-title');
+                const idEl = document.getElementById('report-id');
+                const descEl = document.getElementById('description');
+                
+                if (titleEl) titleEl.textContent = params.title;
+                if (idEl) {
+                    idEl.textContent = `ID: ${params.id}`;
+                    idEl.style.display = 'inline-block';
+                }
+                if (descEl) descEl.textContent = params.description;
                 
                 // Обновляем статистику для отчета
-                document.getElementById('stat1-value').textContent = '15';
-                document.getElementById('stat1-label').textContent = 'Новостей';
-                document.querySelector('#stat1-value').previousElementSibling.textContent = '📰';
+                const stat1Val = document.getElementById('stat1-value');
+                const stat1Lab = document.getElementById('stat1-label');
+                if (stat1Val) stat1Val.textContent = '15';
+                if (stat1Lab) stat1Lab.textContent = 'Новостей';
                 
-                document.getElementById('stat2-value').textContent = '+8.7%';
-                document.getElementById('stat2-label').textContent = 'Рост';
+                const stat2Val = document.getElementById('stat2-value');
+                const stat2Lab = document.getElementById('stat2-label');
+                if (stat2Val) stat2Val.textContent = '+8.7%';
+                if (stat2Lab) stat2Lab.textContent = 'Рост';
                 
-                document.getElementById('stat3-value').textContent = '-5.2%';
-                document.getElementById('stat3-label').textContent = 'Спад';
+                const stat3Val = document.getElementById('stat3-value');
+                const stat3Lab = document.getElementById('stat3-label');
+                if (stat3Val) stat3Val.textContent = '-5.2%';
+                if (stat3Lab) stat3Lab.textContent = 'Спад';
             }
+        } catch (error) {
+            // Если что-то пошло не так, просто показываем дефолтный контент
+            console.log('Using default content for preview');
         }
-        
-        // Обновляем контент сразу при загрузке
-        updateContentFromURL();
-        
-        // Потом пытаемся загрузить актуальные данные асинхронно (если доступно)
-        generateContent().catch(() => {
-            // Если загрузка не удалась, оставляем контент из URL параметров
-            console.log('Using URL parameters for preview generation');
-        });
     </script>
 </body>
 </html>
