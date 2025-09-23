@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Generate Base64 PNG</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        #canvas { border: 1px solid #ccc; }
+        #result { margin-top: 20px; word-break: break-all; background: #f5f5f5; padding: 10px; }
+    </style>
+</head>
+<body>
+    <h1>Генератор OG изображения</h1>
+    <canvas id="canvas" width="1200" height="630"></canvas>
+    <button onclick="generateImage()">Создать изображение</button>
+    <div id="result"></div>
+
+    <script>
+        function generateImage() {
+            const canvas = document.getElementById('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Градиентный фон
+            const gradient = ctx.createLinearGradient(0, 0, 1200, 630);
+            gradient.addColorStop(0, '#0f172a');
+            gradient.addColorStop(1, '#1e293b');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, 1200, 630);
+            
+            // Главный контейнер
+            ctx.fillStyle = 'rgba(30,41,59,0.95)';
+            ctx.strokeStyle = '#475569';
+            ctx.lineWidth = 2;
+            ctx.fillRect(50, 40, 1100, 550);
+            ctx.strokeRect(50, 40, 1100, 550);
+            
+            // Заголовок
+            ctx.fillStyle = '#3b82f6';
+            ctx.font = 'bold 48px Arial';
+            ctx.fillText('📊 News Analysis', 100, 130);
+            
+            // Динамический текст (это будет заменено)
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 36px Arial';
+            ctx.fillText('{{TITLE}}', 100, 220);
+            
+            ctx.fillStyle = '#3b82f6';
+            ctx.font = '24px Arial';
+            ctx.fillText('ID: {{REPORT_ID}}', 100, 280);
+            
+            ctx.fillStyle = '#cbd5e1';
+            ctx.font = '20px Arial';
+            ctx.fillText('{{DESCRIPTION}}', 100, 340);
+            
+            // Статистика
+            ctx.fillStyle = 'rgba(51,65,85,0.6)';
+            ctx.fillRect(100, 370, 1000, 120);
+            
+            // Статистика 1
+            ctx.fillStyle = '#10b981';
+            ctx.font = 'bold 32px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('+15.7%', 250, 440);
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = '16px Arial';
+            ctx.fillText('📈 РОСТ', 250, 415);
+            
+            // Статистика 2
+            ctx.fillStyle = '#3b82f6';
+            ctx.font = 'bold 32px Arial';
+            ctx.fillText('247', 600, 440);
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = '16px Arial';
+            ctx.fillText('📊 ОТЧЕТЫ', 600, 415);
+            
+            // Статистика 3
+            ctx.fillStyle = '#f59e0b';
+            ctx.font = 'bold 32px Arial';
+            ctx.fillText('87%', 950, 440);
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = '16px Arial';
+            ctx.fillText('🎯 ТОЧНОСТЬ', 950, 415);
+            
+            // Футер
+            ctx.fillStyle = '#64748b';
+            ctx.font = '16px Arial';
+            ctx.textAlign = 'left';
+            ctx.fillText('anykeyer.github.io/NewsStat', 100, 550);
+            ctx.textAlign = 'right';
+            ctx.fillText('Криптоаналитика', 1100, 550);
+            
+            // Получаем base64
+            const base64 = canvas.toDataURL('image/png').split(',')[1];
+            document.getElementById('result').innerHTML = `
+                <h3>Base64 код изображения:</h3>
+                <textarea style="width: 100%; height: 200px;">${base64}</textarea>
+            `;
+        }
+        
+        // Автоматически создаем изображение
+        window.onload = generateImage;
+    </script>
+</body>
+</html>

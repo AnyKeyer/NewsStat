@@ -38,11 +38,17 @@ const createReportHTML = (reportId, title = '', description = '') => `<!DOCTYPE 
     <meta name="twitter:description" content="${description || `🚀 Детальный анализ влияния криптоновостей на токены в отчете ${reportId}.`}" />
     <meta name="twitter:image" content="https://newsstat-og-generator.slejv710.workers.dev/?title=${encodeURIComponent(title || `Отчет ${reportId}`)}&id=${encodeURIComponent(reportId)}&description=${encodeURIComponent(description || `Анализ криптоновостей ${reportId}`)}" />
     
-    <!-- Redirect script for SPA -->
+    <!-- Smart redirect: только для пользователей, не дляботов -->
     <script>
-      // Сохраняем текущий путь и перенаправляем на SPA
-      sessionStorage.setItem('redirectPath', '/report/${reportId}');
-      window.location.href = '/NewsStat/';
+      // Проверяем, это бот или пользователь
+      const isBot = /bot|crawler|spider|crawling/i.test(navigator.userAgent);
+      
+      if (!isBot) {
+        // Для пользователей - редирект на SPA
+        sessionStorage.setItem('redirectPath', '/report/${reportId}');
+        window.location.href = '/NewsStat/';
+      }
+      // Для ботов - остаемся на странице, чтобы они видели мета-теги
     </script>
     
     <style>
