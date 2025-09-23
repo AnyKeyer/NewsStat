@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Loading | NewsStat</title>
+  <meta name="robots" content="noindex" />
+  <meta http-equiv="refresh" content="0; url=/NewsStat/" />
+  <script>
+    // JS fallback (если meta refresh не сработал)
+    (function(){
+      var base = '/NewsStat';
+      var path = window.location.pathname;
+      // Извлекаем часть после /NewsStat
+      var idx = path.indexOf(base);
+      if(idx !== -1){
+        var sub = path.substring(idx + base.length);
+        if(sub && sub !== '/' && sub.trim()){
+          sessionStorage.setItem('redirectPath', sub);
+        }
+      }
+      window.location.replace(base + '/');
+    })();
+  </script>
+  <style>
+    body { margin:0; font-family: system-ui, sans-serif; background:#0f172a; color:#fff; display:flex; align-items:center; justify-content:center; min-height:100vh; }
+    .wrap { text-align:center; }
+    h1 { font-weight:500; color:#3b82f6; }
+    .hint { color:#94a3b8; font-size:14px; margin-top:8px; }
+    a { color:#3b82f6; text-decoration:none; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Загрузка приложения…</h1>
+    <div class="hint">Переходим на SPA роутер…</div>
+    <noscript>
+      Включите JavaScript или откройте <a href="/NewsStat/">главную страницу</a> вручную.
+    </noscript>
+  </div>
+</body>
+</html>
