@@ -27,7 +27,7 @@ const createReportHTML = (reportId, title = '', description = '') => `<!DOCTYPE 
     <meta property="og:site_name" content="News Analysis" />
     <meta property="og:title" content="📊 ${title || `Отчет ${reportId}`} | News Analysis" />
     <meta property="og:description" content="${description || `🚀 Детальный анализ влияния криптоновостей на токены. Профессиональная статистика роста и падения на основе медийных событий в отчете ${reportId}.`}" />
-    <meta property="og:image" content="https://anykeyer.github.io/NewsStat/og-preview.html" />
+    <meta property="og:image" content="https://via.placeholder.com/1200x630/1e293b/3b82f6?text=News+Analysis+%7C+Crypto+Report" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta property="og:url" content="https://anykeyer.github.io/NewsStat/report/${reportId}" />
@@ -36,7 +36,7 @@ const createReportHTML = (reportId, title = '', description = '') => `<!DOCTYPE 
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="📊 ${title || `Отчет ${reportId}`} | News Analysis" />
     <meta name="twitter:description" content="${description || `🚀 Детальный анализ влияния криптоновостей на токены в отчете ${reportId}.`}" />
-    <meta name="twitter:image" content="https://anykeyer.github.io/NewsStat/og-preview.html" />
+    <meta name="twitter:image" content="https://via.placeholder.com/1200x630/1e293b/3b82f6?text=News+Analysis+%7C+Crypto+Report" />
     
     <!-- Redirect script for SPA -->
     <script>
