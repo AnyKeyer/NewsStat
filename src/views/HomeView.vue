@@ -36,21 +36,36 @@
             v-for="report in dateGroup.reports" 
             :key="report.id" 
             class="report-card"
+            @click="navigateToReport(report.id)"
           >
-            <div class="report-content" @click="navigateToReport(report.id)">
-              <h3>{{ report.title }}</h3>
-              <span class="report-time">{{ formatTime(report.createdAt) }}</span>
+            <div class="report-content">
+              <div class="report-header">
+                <h3>{{ report.title }}</h3>
+                <span class="report-time">{{ formatTime(report.createdAt) }}</span>
+              </div>
+              <div class="report-stats">
+                <div class="stat-item">
+                  <span class="stat-label">📈 Новости:</span>
+                  <span class="stat-value">{{ getReportStats(report.id)?.totalNews || '...' }}</span>
+                </div>
+                <div class="stat-item" v-if="getReportStats(report.id)?.averageGrowth">
+                  <span class="stat-label">💰 Средний рост:</span>
+                  <span class="stat-value positive">+{{ getReportStats(report.id)?.averageGrowth.toFixed(1) }}%</span>
+                </div>
+                <div class="stat-item" v-if="getReportStats(report.id)?.averageDecline">
+                  <span class="stat-label">📉 Средний спад:</span>
+                  <span class="stat-value negative">{{ getReportStats(report.id)?.averageDecline.toFixed(1) }}%</span>
+                </div>
+              </div>
             </div>
-            <div class="report-actions">
+            <div class="report-actions" v-if="canDeleteReports">
               <button 
-                v-if="canDeleteReports" 
                 @click.stop="deleteReport(report.id)"
                 class="btn-delete"
                 title="Удалить отчет"
               >
                 🗑️
               </button>
-              <div class="report-arrow" @click="navigateToReport(report.id)">→</div>
             </div>
           </div>
         </div>
@@ -69,11 +84,12 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, onActivated, computed } from 'vue'
+import { onMounted, onActivated, computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useReportStore } from '@/stores/reports'
 import { useAuthStore } from '@/stores/auth'
 import metaService from '@/services/metaService'
+import type { ReportStatistics } from '@/types'
 
 interface DateGroup {
   date: string
@@ -84,6 +100,9 @@ interface DateGroup {
 const router = useRouter()
 const reportStore = useReportStore()
 const authStore = useAuthStore()
+
+// Кэш статистики отчетов
+const reportStatsCache = ref<Map<string, ReportStatistics>>(new Map())
 
 // Проверяем права пользователя
 const canDeleteReports = computed(() => {
@@ -152,8 +171,49 @@ function formatTime(date: Date): string {
   }).format(date)
 }
 
+function getReportStats(reportId: string): ReportStatistics | null {
+  return reportStatsCache.value.get(reportId) || null
+}
+
+async function loadReportStats(reportId: string) {
+  if (reportStatsCache.value.has(reportId)) return
+  
+  try {
+    // Загружаем полный отчет для получения статистики
+    await reportStore.loadReport(reportId)
+    const report = reportStore.currentReport
+    
+    if (report && report.news) {
+      const positiveNews = report.news.filter(n => n.impact > 0)
+      const negativeNews = report.news.filter(n => n.impact < 0)
+      
+      const stats: ReportStatistics = {
+        totalNews: report.news.length,
+        workingNews: report.news.length,
+        averageGrowth: positiveNews.length > 0 
+          ? positiveNews.reduce((sum, n) => sum + n.impact, 0) / positiveNews.length 
+          : 0,
+        averageDecline: negativeNews.length > 0
+          ? negativeNews.reduce((sum, n) => sum + n.impact, 0) / negativeNews.length
+          : 0,
+        positiveNewsCount: positiveNews.length,
+        negativeNewsCount: negativeNews.length
+      }
+      
+      reportStatsCache.value.set(reportId, stats)
+    }
+  } catch (error) {
+    console.error('Ошибка загрузки статистики отчета:', error)
+  }
+}
+
 async function loadReports() {
   await reportStore.loadReports()
+  
+  // Загружаем статистику для всех отчетов
+  for (const report of reportStore.reports) {
+    loadReportStats(report.id)
+  }
 }
 
 async function deleteReport(reportId: string) {
@@ -262,24 +322,33 @@ onActivated(() => {
   background: var(--bg-secondary);
   border: 1px solid var(--border);
   border-radius: 0.75rem;
-  padding: 1rem 1.5rem;
+  padding: 1.25rem;
   cursor: pointer;
   transition: all 0.2s ease;
   display: flex;
-  align-items: center;
   justify-content: space-between;
+  align-items: flex-start;
 }
 
 .report-card:hover {
   background: var(--bg-tertiary);
   transform: translateY(-1px);
-  box-shadow: 0 4px 8px var(--shadow);
+  box-shadow: 0 4px 12px var(--shadow);
 }
 
-.report-content h3 {
+.report-content {
+  flex: 1;
+}
+
+.report-header {
+  margin-bottom: 0.75rem;
+}
+
+.report-header h3 {
   color: var(--text-primary);
   margin-bottom: 0.25rem;
   font-size: 1.1rem;
+  font-weight: 600;
 }
 
 .report-time {
@@ -287,10 +356,42 @@ onActivated(() => {
   font-size: 0.875rem;
 }
 
+.report-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.stat-label {
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+}
+
+.stat-value {
+  color: var(--text-primary);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.stat-value.positive {
+  color: var(--success, #10b981);
+}
+
+.stat-value.negative {
+  color: var(--danger, #ef4444);
+}
+
 .report-actions {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  margin-left: 1rem;
 }
 
 .btn-delete {
@@ -308,18 +409,6 @@ onActivated(() => {
   opacity: 1;
   background: var(--danger);
   color: white;
-}
-
-.report-arrow {
-  color: var(--accent);
-  font-size: 1.25rem;
-  font-weight: bold;
-  cursor: pointer;
-  transition: color 0.2s ease;
-}
-
-.report-arrow:hover {
-  color: var(--primary);
 }
 
 .empty-state {
