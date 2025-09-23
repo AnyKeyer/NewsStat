@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            margin: 0;
+            width: 1200px;
+            height: 630px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        
+        .container {
+            width: 1100px;
+            height: 550px;
+            background: rgba(30, 41, 59, 0.9);
+            border-radius: 24px;
+            border: 2px solid #475569;
+            padding: 40px;
+            box-sizing: border-box;
+            position: relative;
+        }
+        
+        .header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        
+        .logo {
+            font-size: 48px;
+            margin-right: 20px;
+        }
+        
+        .brand {
+            font-size: 36px;
+            font-weight: 700;
+            color: #3b82f6;
+        }
+        
+        .title {
+            font-size: 42px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: #f1f5f9;
+        }
+        
+        .description {
+            font-size: 24px;
+            color: #cbd5e1;
+            margin-bottom: 40px;
+            line-height: 1.4;
+        }
+        
+        .stats {
+            display: flex;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+        
+        .stat {
+            flex: 1;
+            background: rgba(51, 65, 85, 0.8);
+            border-radius: 16px;
+            padding: 20px;
+            text-align: center;
+            border: 1px solid #475569;
+        }
+        
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        
+        .stat-label {
+            font-size: 14px;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .positive { color: #10b981; }
+        .negative { color: #ef4444; }
+        
+        .footer {
+            position: absolute;
+            bottom: 20px;
+            left: 40px;
+            right: 40px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 16px;
+            color: #64748b;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">📊</div>
+            <div class="brand">News Analysis</div>
+        </div>
+        
+        <div class="title">Анализ криптоновостей</div>
+        
+        <div class="description">
+            Профессиональная аналитика влияния новостей на крипторынок.<br>
+            Отслеживание роста и падения токенов на основе медийных событий.
+        </div>
+        
+        <div class="stats">
+            <div class="stat">
+                <div class="stat-value">247</div>
+                <div class="stat-label">📈 Всего отчетов</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value positive">+12.4%</div>
+                <div class="stat-label">💰 Средний рост</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value negative">-8.7%</div>
+                <div class="stat-label">📉 Средний спад</div>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <div>anykeyer.github.io/NewsStat</div>
+            <div>Создано на GitHub Pages</div>
+        </div>
+    </div>
+</body>
+</html>
