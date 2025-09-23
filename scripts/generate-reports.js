@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 
-// Скрипт для генерации статических страниц отчетов с правильными мета-тегами
-// Запускается после build для создания SEO-friendly страниц
+// Скрипт для создания УНИВЕРСАЛЬНОГО обработчика отчетов
+// Работает с ЛЮБЫМИ report ID из R2 базы данных динамически
+// Никаких статических файлов - только один универсальный index.html
 
 import fs from 'fs';
 import path from 'path';
@@ -10,45 +11,109 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Шаблон HTML для отчета
-const createReportHTML = (reportId, title = '', description = '') => `<!DOCTYPE html>
+console.log('🚀 Создаем универсальный обработчик отчетов для R2 базы данных...\n');
+
+// Создаем директорию для отчетов
+const reportsDir = path.join(__dirname, '../dist/report');
+
+if (!fs.existsSync(reportsDir)) {
+  fs.mkdirSync(reportsDir, { recursive: true });
+}
+
+// Универсальный HTML обработчик для ЛЮБЫХ report ID
+const universalReportHTML = `<!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/NewsStat/favicon.ico" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
-    <!-- Dynamic meta tags for report -->
-    <title>📊 ${title || `Отчет ${reportId}`} | News Analysis</title>
-    <meta name="description" content="${description || `Детальный анализ криптоновостей в отчете ${reportId}. Статистика влияния новостей на курсы токенов с процентными показателями роста и падения.`}" />
+    <!-- Dynamic meta tags for ANY report from R2 database -->
+    <title id="page-title">📊 Анализ криптоновостей | News Analysis</title>
+    <meta id="page-description" name="description" content="Профессиональный анализ влияния криптоновостей на рынок токенов из R2 базы данных." />
     
     <!-- Open Graph мета-теги -->
     <meta property="og:type" content="article" />
     <meta property="og:site_name" content="News Analysis" />
-    <meta property="og:title" content="📊 ${title || `Отчет ${reportId}`} | News Analysis" />
-    <meta property="og:description" content="${description || `🚀 Детальный анализ влияния криптоновостей на токены. Профессиональная статистика роста и падения на основе медийных событий в отчете ${reportId}.`}" />
-    <meta property="og:image" content="https://newsstat-og-generator.slejv710.workers.dev/?title=${encodeURIComponent(title || `Отчет ${reportId}`)}&id=${encodeURIComponent(reportId)}&description=${encodeURIComponent(description || `Анализ криптоновостей ${reportId}`)}" />
+    <meta property="og:title" id="og-title" content="📊 Анализ криптоновостей | News Analysis" />
+    <meta property="og:description" id="og-description" content="Профессиональный анализ влияния криптоновостей на рынок токенов." />
+    <meta property="og:image" id="og-image" content="https://newsstat-og-generator.slejv710.workers.dev/?title=Анализ%20криптоновостей&id=report&description=Профессиональный%20анализ%20влияния%20криптоновостей%20на%20рынок" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:url" content="https://anykeyer.github.io/NewsStat/report/${reportId}" />
+    <meta property="og:url" id="og-url" content="https://anykeyer.github.io/NewsStat/" />
     
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="📊 ${title || `Отчет ${reportId}`} | News Analysis" />
-    <meta name="twitter:description" content="${description || `🚀 Детальный анализ влияния криптоновостей на токены в отчете ${reportId}.`}" />
-    <meta name="twitter:image" content="https://newsstat-og-generator.slejv710.workers.dev/?title=${encodeURIComponent(title || `Отчет ${reportId}`)}&id=${encodeURIComponent(reportId)}&description=${encodeURIComponent(description || `Анализ криптоновостей ${reportId}`)}" />
+    <meta name="twitter:title" id="twitter-title" content="📊 Анализ криптоновостей | News Analysis" />
+    <meta name="twitter:description" id="twitter-description" content="Профессиональный анализ влияния криптоновостей на рынок токенов." />
+    <meta name="twitter:image" id="twitter-image" content="https://newsstat-og-generator.slejv710.workers.dev/?title=Анализ%20криптоновостей&id=report&description=Профессиональный%20анализ%20влияния%20криптоновостей%20на%20рынок" />
     
-    <!-- Smart redirect: только для пользователей, не дляботов -->
     <script>
-      // Проверяем, это бот или пользователь
-      const isBot = /bot|crawler|spider|crawling/i.test(navigator.userAgent);
+      // 🎯 УНИВЕРСАЛЬНЫЙ ОБРАБОТЧИК для R2 BASE ДАННЫХ
+      console.log('🔍 Universal R2 Report Handler v3.0 activated');
+      
+      // Получаем report ID из URL
+      var fullPath = window.location.pathname;
+      var reportId = null;
+      
+      // Поддерживаем все варианты URL:
+      // /NewsStat/report/mfwxdklij34p858ql4t
+      // /report/mfwxdklij34p858ql4t  
+      var reportMatch = fullPath.match(/\\/report\\/([a-zA-Z0-9]+)/);
+      if (reportMatch) {
+        reportId = reportMatch[1];
+      }
+      
+      console.log('📊 Report ID from R2:', reportId);
+      console.log('🌐 Full Path:', fullPath);
+      
+      if (reportId && reportId.length > 5) {
+        // Обновляем мета-теги для конкретного отчета из R2
+        var title = '📊 Отчет ' + reportId + ' | News Analysis';
+        var description = 'Детальный анализ криптоновостей из R2 базы данных. Отчет ' + reportId + ' - статистика влияния новостей на курсы токенов с процентными показателями роста и падения.';
+        var imageUrl = 'https://newsstat-og-generator.slejv710.workers.dev/?title=' + encodeURIComponent('Отчет ' + reportId) + '&id=' + encodeURIComponent(reportId) + '&description=' + encodeURIComponent('Анализ из R2: ' + reportId);
+        var pageUrl = 'https://anykeyer.github.io/NewsStat/report/' + reportId;
+        
+        console.log('🎯 Updating meta tags for R2 report:', reportId);
+        console.log('🖼️ Generated Image URL:', imageUrl);
+        
+        // Динамически обновляем все мета-теги
+        document.getElementById('page-title').textContent = title;
+        document.getElementById('page-description').content = description;
+        document.getElementById('og-title').content = title;
+        document.getElementById('og-description').content = description;
+        document.getElementById('og-image').content = imageUrl;
+        document.getElementById('og-url').content = pageUrl;
+        document.getElementById('twitter-title').content = title;
+        document.getElementById('twitter-description').content = description;
+        document.getElementById('twitter-image').content = imageUrl;
+        document.title = title;
+        
+        console.log('✅ Meta tags updated for R2 report:', reportId);
+      } else {
+        console.log('⚠️ No valid report ID found');
+      }
+      
+      // Детекция ботов для социальных сетей  
+      var userAgent = navigator.userAgent || '';
+      var isBot = /bot|crawler|spider|crawling|telegram|whatsapp|facebook|twitter|slack|discord/i.test(userAgent);
+      
+      console.log('🤖 User Agent:', userAgent);
+      console.log('🔍 Is Social Media Bot:', isBot);
       
       if (!isBot) {
-        // Для пользователей - редирект на SPA
-        sessionStorage.setItem('redirectPath', '/report/${reportId}');
-        window.location.href = '/NewsStat/';
+        console.log('👤 Human user detected - redirecting to Vue SPA');
+        // Для пользователей - редирект в Vue SPA
+        if (reportId) {
+          sessionStorage.setItem('redirectPath', '/report/' + reportId);
+        }
+        // Задержка для загрузки мета-тегов перед редиректом
+        setTimeout(function() {
+          window.location.href = '/NewsStat/';
+        }, 200);
+      } else {
+        console.log('🤖 Social media bot detected - displaying meta tags');
+        // Для ботов социальных сетей - остаемся на странице с мета-тегами
       }
-      // Для ботов - остаемся на странице, чтобы они видели мета-теги
     </script>
     
     <style>
@@ -64,20 +129,10 @@ const createReportHTML = (reportId, title = '', description = '') => `<!DOCTYPE 
         flex-direction: column;
         justify-content: center;
       }
-      .loader {
-        font-size: 48px;
-        margin-bottom: 20px;
-      }
-      .title {
-        font-size: 24px;
-        margin-bottom: 10px;
-        color: #3b82f6;
-      }
-      .description {
-        font-size: 16px;
-        color: #cbd5e1;
-        margin-bottom: 30px;
-      }
+      .loader { font-size: 48px; margin-bottom: 20px; }
+      .title { font-size: 24px; margin-bottom: 10px; color: #3b82f6; }
+      .description { font-size: 16px; color: #cbd5e1; margin-bottom: 20px; }
+      .tech-info { font-size: 12px; color: #64748b; margin-top: 20px; }
       .link {
         color: #3b82f6;
         text-decoration: none;
@@ -87,282 +142,42 @@ const createReportHTML = (reportId, title = '', description = '') => `<!DOCTYPE 
         border-radius: 8px;
         display: inline-block;
         transition: all 0.2s ease;
+        margin-top: 20px;
       }
-      .link:hover {
-        background: #3b82f6;
-        color: white;
-      }
+      .link:hover { background: #3b82f6; color: white; }
     </style>
 </head>
 <body>
     <div class="loader">📊</div>
-    <div class="title">${title || `Отчет ${reportId}`}</div>
-    <div class="description">Загружаем анализ криптоновостей...</div>
+    <div class="title">Загружаем отчет из R2...</div>
+    <div class="description">Анализ криптоновостей</div>
+    <div class="tech-info">Universal R2 Handler v3.0 | Dynamic Report Processing</div>
+    
+    <!-- Для ботов без JavaScript -->
     <noscript>
-      <a href="/NewsStat/" class="link">Перейти на главную</a>
+      <div>
+        <a href="/NewsStat/" class="link">📊 Перейти к анализу</a>
+      </div>
     </noscript>
 </body>
 </html>`;
 
-
-
-// Функция для создания статичного OG-изображения
-const createOGImageHTML = (title, reportId, description = '') => `<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <style>
-        body {
-            margin: 0;
-            width: 1200px;
-            height: 630px;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-            position: relative;
-        }
-        
-        /* Grid background */
-        body::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-image: 
-                linear-gradient(rgba(59, 130, 246, 0.1) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(59, 130, 246, 0.1) 1px, transparent 1px);
-            background-size: 50px 50px;
-        }
-        
-        .container {
-            width: 1100px;
-            height: 550px;
-            background: rgba(30, 41, 59, 0.95);
-            border-radius: 24px;
-            border: 2px solid #475569;
-            padding: 50px;
-            box-sizing: border-box;
-            position: relative;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4);
-        }
-        
-        .header {
-            display: flex;
-            align-items: center;
-            margin-bottom: 40px;
-        }
-        
-        .logo {
-            font-size: 56px;
-            margin-right: 24px;
-            filter: drop-shadow(0 0 10px rgba(59, 130, 246, 0.3));
-        }
-        
-        .brand {
-            font-size: 32px;
-            font-weight: 700;
-            color: #3b82f6;
-            text-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
-        }
-        
-        .report-title {
-            font-size: 48px;
-            font-weight: 700;
-            margin-bottom: 24px;
-            color: #f1f5f9;
-            line-height: 1.2;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-        }
-        
-        .report-id {
-            font-size: 18px;
-            color: #64748b;
-            margin-bottom: 40px;
-            font-family: 'Courier New', monospace;
-            background: rgba(51, 65, 85, 0.6);
-            padding: 8px 16px;
-            border-radius: 8px;
-            display: inline-block;
-        }
-        
-        .description {
-            font-size: 22px;
-            color: #cbd5e1;
-            line-height: 1.5;
-            margin-bottom: 40px;
-        }
-        
-        .stats {
-            display: flex;
-            gap: 24px;
-            margin-bottom: 30px;
-        }
-        
-        .stat {
-            flex: 1;
-            background: linear-gradient(135deg, rgba(51, 65, 85, 0.8) 0%, rgba(71, 85, 105, 0.6) 100%);
-            border-radius: 16px;
-            padding: 20px;
-            text-align: center;
-            border: 1px solid #475569;
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .stat::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 3px;
-            background: linear-gradient(90deg, #3b82f6, #10b981);
-        }
-        
-        .stat-icon {
-            font-size: 24px;
-            margin-bottom: 8px;
-        }
-        
-        .stat-value {
-            font-size: 28px;
-            font-weight: 700;
-            margin-bottom: 8px;
-        }
-        
-        .stat-label {
-            font-size: 13px;
-            color: #94a3b8;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        
-        .positive { color: #10b981; }
-        .negative { color: #ef4444; }
-        
-        .footer {
-            position: absolute;
-            bottom: 30px;
-            left: 50px;
-            right: 50px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 16px;
-            color: #64748b;
-        }
-        
-        .footer-left {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-        
-        .footer-icon {
-            width: 24px;
-            height: 24px;
-            background: #3b82f6;
-            border-radius: 6px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 12px;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <div class="logo">📊</div>
-            <div class="brand">News Analysis</div>
-        </div>
-        
-        <div class="report-title">${title}</div>
-        
-        <div class="report-id">ID: ${reportId}</div>
-        
-        <div class="description">
-            ${description || 'Профессиональный анализ влияния новостей на курсы криптовалют'}
-        </div>
-        
-        <div class="stats">
-            <div class="stat">
-                <div class="stat-icon">📰</div>
-                <div class="stat-value">15</div>
-                <div class="stat-label">Новостей</div>
-            </div>
-            <div class="stat">
-                <div class="stat-icon">📈</div>
-                <div class="stat-value positive">+8.7%</div>
-                <div class="stat-label">Рост</div>
-            </div>
-            <div class="stat">
-                <div class="stat-icon">📉</div>
-                <div class="stat-value negative">-5.2%</div>
-                <div class="stat-label">Спад</div>
-            </div>
-        </div>
-        
-        <div class="footer">
-            <div class="footer-left">
-                <div class="footer-icon">📊</div>
-                <div>anykeyer.github.io/NewsStat</div>
-            </div>
-            <div>Криптоаналитика</div>
-        </div>
-    </div>
-</body>
-</html>`;
-
-// Создаем директорию для отчетов
-const reportsDir = path.join(__dirname, '../dist/report');
-
-if (!fs.existsSync(reportsDir)) {
-  fs.mkdirSync(reportsDir, { recursive: true });
-}
-
-// Импортируем данные отчетов из централизованного сервиса
-// В Node.js окружении мы не можем импортировать TS файлы напрямую,
-// поэтому дублируем данные здесь, но в будущем можно настроить сборку
-const sampleReports = [
-  {
-    id: 'mfwmt8jfstpheqzctef',
-    title: 'Bitcoin ETF одобрен SEC - влияние на рынок',
-    description: 'Анализ влияния одобрения Bitcoin ETF комиссией по ценным бумагам США на курс BTC и весь криптовалютный рынок.',
-    newsCount: 15,
-    profitability: { positive: 8.7, negative: -2.3 }
-  },
-  {
-    id: 'sample-report-1',
-    title: 'Ethereum обновление London Fork',
-    description: 'Подробный анализ влияния обновления London Fork на экосистему Ethereum и цену ETH.',
-    newsCount: 12,
-    profitability: { positive: 12.1, negative: -5.4 }
+// Удаляем все старые статические отчеты
+console.log('🗑️ Удаляем старые статические отчеты...');
+const existingDirs = fs.readdirSync(reportsDir, { withFileTypes: true });
+existingDirs.forEach(dirent => {
+  if (dirent.isDirectory()) {
+    const dirPath = path.join(reportsDir, dirent.name);
+    fs.rmSync(dirPath, { recursive: true, force: true });
+    console.log('❌ Удален статический отчет:', dirent.name);
   }
-];
-
-// Генерируем HTML файлы для каждого отчета
-sampleReports.forEach(report => {
-  // Создаем страницу отчета
-  const reportPath = path.join(reportsDir, report.id);
-  if (!fs.existsSync(reportPath)) {
-    fs.mkdirSync(reportPath, { recursive: true });
-  }
-  
-  const htmlContent = createReportHTML(report.id, report.title, report.description);
-  fs.writeFileSync(path.join(reportPath, 'index.html'), htmlContent);
-  
-  console.log(`✅ Создан файл: /report/${report.id}/index.html`);
 });
 
-console.log(`\n🎉 Генерация завершена! Создано ${sampleReports.length} статических страниц отчетов.`);
-console.log('📊 Используется универсальный og-preview.html для Telegram');
-console.log('� Все отчеты используют одно общее превью изображение');
+// Создаем ЕДИНСТВЕННЫЙ универсальный index.html
+fs.writeFileSync(path.join(reportsDir, 'index.html'), universalReportHTML);
+
+console.log('\\n🎉 Универсальный обработчик создан!');
+console.log('✅ Теперь ВСЕ report ID обрабатываются динамически');
+console.log('🗄️ Работает с R2 базой данных без статической генерации');
+console.log('🔗 URL: /report/ЛЮБОЙ_ID_ИЗ_R2');
+console.log('\\n🚀 Готово для работы с Telegram и другими социальными сетями!');
