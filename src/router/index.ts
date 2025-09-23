@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import type { RouteRecordRaw } from 'vue-router'
+import type { RouteRecordRaw, RouteLocationNormalized, NavigationGuardNext } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 
 const routes: RouteRecordRaw[] = [
@@ -19,21 +19,27 @@ const routes: RouteRecordRaw[] = [
     name: 'CreateReport',
     component: () => import('@/views/CreateReportView.vue'),
     meta: { requiresAuth: true }
+  },
+  // Catch-all (optional inside SPA). Real 404 handled by public/404.html for deep links on GitHub Pages.
+  {
+    path: '/:pathMatch(.*)*',
+    redirect: '/'
   }
 ]
 
 const router = createRouter({
   history: createWebHistory('/NewsStat/'),
-  routes
+  routes,
+  scrollBehavior(to: RouteLocationNormalized, from: RouteLocationNormalized, saved: { left: number; top: number } | null) {
+    if (saved) return saved
+    return { top: 0 }
+  }
 })
 
-// Защита маршрутов
-router.beforeEach((to, from, next) => {
+// Auth guard
+router.beforeEach((to: RouteLocationNormalized, from: RouteLocationNormalized, next: NavigationGuardNext) => {
   const authStore = useAuthStore()
-
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
-    // Если пользователь не авторизован, перенаправляем на главную
-    // Модальное окно входа откроется автоматически при попытке создать отчет
     next({ name: 'Home' })
   } else {
     next()
