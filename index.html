@@ -15,7 +15,6 @@
     <meta property="og:image" content="https://og-image.vercel.app/📊%20News%20Analysis.png?theme=dark&md=1&fontSize=100px&images=https%3A%2F%2Fcdn.jsdelivr.net%2Fgh%2Fremojify%2Femojify.js%40master%2Fsrc%2Femojis%2F1f4ca.png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:url" content="https://anykeyer.github.io/NewsStat/" />
     
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image" />
@@ -27,23 +26,44 @@
     <div id="app"></div>
     <script type="module" src="/src/main.ts"></script>
     
-    <!-- Скрипт для улучшения превью в социальных сетях -->
+    <!-- Скрипт для обновления мета-тегов -->
     <script>
-      // Проверяем, есть ли в URL report ID для превью
-      const path = window.location.hash;
-      const userAgent = navigator.userAgent || '';
-      
-      // Проверяем, является ли запрос от социальной сети или бота
-      const isSocialBot = /facebookexternalhit|twitterbot|linkedinbot|telegrambot|whatsapp|skypeuripreview|slackbot/i.test(userAgent);
-      
-      if (isSocialBot && path.includes('/report/')) {
-        // Для ботов социальных сетей показываем статичную версию
-        const reportId = path.split('/report/')[1];
-        if (reportId) {
-          // Перенаправляем на статичную страницу превью
-          window.location.href = `/NewsStat/report-preview.html?id=${reportId}`;
+      // Обновляем мета-теги для корректного превью
+      function updateMetaTags() {
+        const currentUrl = window.location.href;
+        
+        // Обновляем og:url чтобы он соответствовал текущему URL
+        let ogUrl = document.querySelector('meta[property="og:url"]');
+        if (!ogUrl) {
+          ogUrl = document.createElement('meta');
+          ogUrl.setAttribute('property', 'og:url');
+          document.head.appendChild(ogUrl);
+        }
+        ogUrl.setAttribute('content', currentUrl);
+        
+        // Для ссылок на отчеты обновляем title и description
+        const hash = window.location.hash;
+        if (hash.includes('/report/')) {
+          const reportId = hash.split('/report/')[1]?.split('?')[0];
+          if (reportId) {
+            // Обновляем заголовок
+            let ogTitle = document.querySelector('meta[property="og:title"]');
+            if (ogTitle) {
+              ogTitle.setAttribute('content', `📊 Отчет анализа ${reportId} | News Analysis`);
+            }
+            
+            // Обновляем описание  
+            let ogDesc = document.querySelector('meta[property="og:description"]');
+            if (ogDesc) {
+              ogDesc.setAttribute('content', `🚀 Детальный анализ влияния криптоновостей на токены. Статистика роста и падения на основе медийных событий. Отчет: ${reportId}`);
+            }
+          }
         }
       }
+      
+      // Обновляем мета-теги при загрузке и изменении hash
+      updateMetaTags();
+      window.addEventListener('hashchange', updateMetaTags);
     </script>
   </body>
 </html>
