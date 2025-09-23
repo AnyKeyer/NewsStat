@@ -35,6 +35,10 @@ jobs:
         echo "VITE_R2_ACCOUNT_ID=${{ secrets.VITE_R2_ACCOUNT_ID }}" >> .env.production
         echo "VITE_R2_ACCESS_KEY_ID=${{ secrets.VITE_R2_ACCESS_KEY_ID }}" >> .env.production
         echo "VITE_R2_SECRET_ACCESS_KEY=${{ secrets.VITE_R2_SECRET_ACCESS_KEY }}" >> .env.production
+        echo "VITE_DEFAULT_ADMIN_USERNAME=${{ secrets.VITE_DEFAULT_ADMIN_USERNAME }}" >> .env.production
+        echo "VITE_DEFAULT_ADMIN_PASSWORD=${{ secrets.VITE_DEFAULT_ADMIN_PASSWORD }}" >> .env.production
+        echo "VITE_DEFAULT_EDITOR_USERNAME=${{ secrets.VITE_DEFAULT_EDITOR_USERNAME }}" >> .env.production
+        echo "VITE_DEFAULT_EDITOR_PASSWORD=${{ secrets.VITE_DEFAULT_EDITOR_PASSWORD }}" >> .env.production
 
     - name: Build
       run: npm run build

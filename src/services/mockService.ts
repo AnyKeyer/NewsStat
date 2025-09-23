@@ -12,25 +12,36 @@ class MockService {
       return JSON.parse(stored)
     }
     
-    // Дефолтные пользователи
-    const defaultUsers: User[] = [
-      {
-        id: 'admin-001',
-        username: 'alexander.petrov',
-        password: 'SecurePass2024!',
-        displayName: 'Александр Петров',
-        isAuthenticated: false,
-        role: 'admin'
-      },
-      {
+    // Дефолтные пользователи из переменных окружения
+    const defaultUsers: User[] = []
+    
+    // Для мок-режима используем простые тестовые креденшилы
+    // В продакшене они будут браться из переменных окружения
+    const adminUsername = import.meta.env.VITE_DEFAULT_ADMIN_USERNAME || 'admin'
+    const adminPassword = import.meta.env.VITE_DEFAULT_ADMIN_PASSWORD || 'admin123'
+    
+    defaultUsers.push({
+      id: 'admin-001',
+      username: adminUsername,
+      password: adminPassword,
+      displayName: 'Администратор',
+      isAuthenticated: false,
+      role: 'admin'
+    })
+    
+    const editorUsername = import.meta.env.VITE_DEFAULT_EDITOR_USERNAME
+    const editorPassword = import.meta.env.VITE_DEFAULT_EDITOR_PASSWORD
+    
+    if (editorUsername && editorPassword) {
+      defaultUsers.push({
         id: 'editor-001',
-        username: 'maria.sidorova',
-        password: 'EditorKey2024#',
-        displayName: 'Мария Сидорова',
+        username: editorUsername,
+        password: editorPassword,
+        displayName: 'Редактор',
         isAuthenticated: false,
         role: 'editor'
-      }
-    ]
+      })
+    }
     
     this.saveUsers(defaultUsers)
     return defaultUsers

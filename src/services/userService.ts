@@ -75,24 +75,39 @@ class UserService {
   }
 
   private getDefaultUsers(): User[] {
-    return [
-      {
+    const users: User[] = []
+    
+    // Администратор из переменных окружения
+    const adminUsername = import.meta.env.VITE_DEFAULT_ADMIN_USERNAME
+    const adminPassword = import.meta.env.VITE_DEFAULT_ADMIN_PASSWORD
+    
+    if (adminUsername && adminPassword) {
+      users.push({
         id: 'admin-001',
-        username: 'alexander.petrov',
-        password: 'SecurePass2024!',
-        displayName: 'Александр Петров',
+        username: adminUsername,
+        password: adminPassword,
+        displayName: 'Администратор',
         isAuthenticated: false,
-        role: 'admin' // Полные права: создание и удаление отчетов
-      },
-      {
+        role: 'admin'
+      })
+    }
+    
+    // Редактор из переменных окружения (опционально)
+    const editorUsername = import.meta.env.VITE_DEFAULT_EDITOR_USERNAME
+    const editorPassword = import.meta.env.VITE_DEFAULT_EDITOR_PASSWORD
+    
+    if (editorUsername && editorPassword) {
+      users.push({
         id: 'editor-001',
-        username: 'maria.sidorova',
-        password: 'EditorKey2024#',
-        displayName: 'Мария Сидорова',
+        username: editorUsername,
+        password: editorPassword,
+        displayName: 'Редактор',
         isAuthenticated: false,
-        role: 'editor' // Права редактора: только создание отчетов
-      }
-    ]
+        role: 'editor'
+      })
+    }
+    
+    return users
   }
 
   private async streamToString(stream: any): Promise<string> {
