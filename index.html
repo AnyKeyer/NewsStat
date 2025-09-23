@@ -10,8 +10,8 @@
     <!-- Open Graph мета-теги для социальных сетей -->
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="News Analysis" />
-    <meta property="og:title" content="📊 Анализ криптоновостей | News Analysis" />
-    <meta property="og:description" content="🚀 Профессиональная аналитика влияния новостей на крипторынок. Отслеживание роста и падения токенов на основе медийных событий. Детальные отчеты с процентной статистикой." />
+    <meta property="og:title" content="📊 News Analysis - Аналитика криптоновостей" />
+    <meta property="og:description" content="🚀 Профессиональные отчеты анализа влияния новостей на курсы криптовалют. Детальная статистика роста и падения токенов на основе медийных событий. Создавайте и изучайте аналитические отчеты." />
     <meta property="og:image" content="https://og-image.vercel.app/📊%20News%20Analysis.png?theme=dark&md=1&fontSize=100px&images=https%3A%2F%2Fcdn.jsdelivr.net%2Fgh%2Fremojify%2Femojify.js%40master%2Fsrc%2Femojis%2F1f4ca.png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
@@ -26,44 +26,6 @@
     <div id="app"></div>
     <script type="module" src="/src/main.ts"></script>
     
-    <!-- Скрипт для обновления мета-тегов -->
-    <script>
-      // Обновляем мета-теги для корректного превью
-      function updateMetaTags() {
-        const currentUrl = window.location.href;
-        
-        // Обновляем og:url чтобы он соответствовал текущему URL
-        let ogUrl = document.querySelector('meta[property="og:url"]');
-        if (!ogUrl) {
-          ogUrl = document.createElement('meta');
-          ogUrl.setAttribute('property', 'og:url');
-          document.head.appendChild(ogUrl);
-        }
-        ogUrl.setAttribute('content', currentUrl);
-        
-        // Для ссылок на отчеты обновляем title и description
-        const hash = window.location.hash;
-        if (hash.includes('/report/')) {
-          const reportId = hash.split('/report/')[1]?.split('?')[0];
-          if (reportId) {
-            // Обновляем заголовок
-            let ogTitle = document.querySelector('meta[property="og:title"]');
-            if (ogTitle) {
-              ogTitle.setAttribute('content', `📊 Отчет анализа ${reportId} | News Analysis`);
-            }
-            
-            // Обновляем описание  
-            let ogDesc = document.querySelector('meta[property="og:description"]');
-            if (ogDesc) {
-              ogDesc.setAttribute('content', `🚀 Детальный анализ влияния криптоновостей на токены. Статистика роста и падения на основе медийных событий. Отчет: ${reportId}`);
-            }
-          }
-        }
-      }
-      
-      // Обновляем мета-теги при загрузке и изменении hash
-      updateMetaTags();
-      window.addEventListener('hashchange', updateMetaTags);
-    </script>
+
   </body>
 </html>
