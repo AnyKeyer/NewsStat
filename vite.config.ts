@@ -5,7 +5,7 @@ import { resolve } from 'path'
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [vue()],
-  base: '/NewsAnalys/',
+  base: '/NewsStat/',
   resolve: {
     alias: {
       '@': resolve(__dirname, 'src'),
