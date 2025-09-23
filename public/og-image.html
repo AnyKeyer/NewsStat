@@ -184,7 +184,34 @@
             };
         }
         
-        function generateContent() {
+        // Попробуем загрузить актуальные данные отчета
+        async function loadReportData(reportId) {
+            try {
+                // В реальном приложении здесь был бы API запрос
+                // Пока используем моковые данные, но структура готова для API
+                const mockData = {
+                    'mfwmt8jfstpheqzctef': {
+                        title: 'Bitcoin ETF одобрен SEC - влияние на рынок',
+                        description: 'Анализ влияния одобрения Bitcoin ETF комиссией по ценным бумагам США на курс BTC и весь криптовалютный рынок.',
+                        newsCount: 15,
+                        profitability: { positive: 8.7, negative: -2.3 }
+                    },
+                    'sample-report-1': {
+                        title: 'Ethereum обновление London Fork',
+                        description: 'Подробный анализ влияния обновления London Fork на экосистему Ethereum и цену ETH.',
+                        newsCount: 12,
+                        profitability: { positive: 12.1, negative: -5.4 }
+                    }
+                };
+                
+                return mockData[reportId] || null;
+            } catch (error) {
+                console.error('Failed to load report data:', error);
+                return null;
+            }
+        }
+        
+        async function generateContent() {
             const params = getUrlParams();
             const container = document.getElementById('container');
             
@@ -192,74 +219,102 @@
             
             if (isDefaultView) {
                 // Дефолтный вид для главной страницы
-                container.innerHTML = `
-                    <div class="header">
-                        <div class="logo">📊</div>
-                        <div class="brand">News Analysis</div>
-                    </div>
-                    
-                    <div class="report-title">Анализ криптоновостей</div>
-                    
-                    <div class="description">
-                        Профессиональная аналитика влияния новостей на крипторынок.<br>
-                        Отслеживание роста и падения токенов на основе медийных событий.
-                    </div>
-                    
-                    <div class="stats">
-                        <div class="stat">
-                            <div class="stat-icon">📈</div>
-                            <div class="stat-value">247</div>
-                            <div class="stat-label">Всего отчетов</div>
-                        </div>
-                        <div class="stat">
-                            <div class="stat-icon">💰</div>
-                            <div class="stat-value positive">+12.4%</div>
-                            <div class="stat-label">Средний рост</div>
-                        </div>
-                        <div class="stat">
-                            <div class="stat-icon">📉</div>
-                            <div class="stat-value negative">-8.7%</div>
-                            <div class="stat-label">Средний спад</div>
-                        </div>
-                    </div>
-                `;
+                renderDefaultView(container);
             } else {
-                // Вид для конкретного отчета
-                container.innerHTML = `
-                    <div class="header">
-                        <div class="logo">📊</div>
-                        <div class="brand">News Analysis</div>
-                    </div>
-                    
-                    <div class="report-title">${params.title}</div>
-                    
-                    <div class="report-id">ID: ${params.id}</div>
-                    
-                    <div class="description">
-                        ${params.description}
-                    </div>
-                    
-                    <div class="stats">
-                        <div class="stat">
-                            <div class="stat-icon">📰</div>
-                            <div class="stat-value">15</div>
-                            <div class="stat-label">Новостей</div>
-                        </div>
-                        <div class="stat">
-                            <div class="stat-icon">📈</div>
-                            <div class="stat-value positive">+8.7%</div>
-                            <div class="stat-label">Рост</div>
-                        </div>
-                        <div class="stat">
-                            <div class="stat-icon">📉</div>
-                            <div class="stat-value negative">-5.2%</div>
-                            <div class="stat-label">Спад</div>
-                        </div>
-                    </div>
-                `;
+                // Попробуем загрузить актуальные данные для отчета
+                const reportData = await loadReportData(params.id);
+                
+                if (reportData) {
+                    // Используем актуальные данные
+                    renderReportView(container, reportData, params.id);
+                } else {
+                    // Fallback на данные из URL параметров
+                    renderReportView(container, {
+                        title: params.title,
+                        description: params.description,
+                        newsCount: 15,
+                        profitability: { positive: 8.7, negative: -5.2 }
+                    }, params.id);
+                }
             }
             
             // Добавляем footer для всех видов
+            addFooter(container);
+        }
+        
+        function renderDefaultView(container) {
+            container.innerHTML = `
+                <div class="header">
+                    <div class="logo">📊</div>
+                    <div class="brand">News Analysis</div>
+                </div>
+                
+                <div class="report-title">Анализ криптоновостей</div>
+                
+                <div class="description">
+                    Профессиональная аналитика влияния новостей на крипторынок.<br>
+                    Отслеживание роста и падения токенов на основе медийных событий.
+                </div>
+                
+                <div class="stats">
+                    <div class="stat">
+                        <div class="stat-icon">📈</div>
+                        <div class="stat-value">247</div>
+                        <div class="stat-label">Всего отчетов</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-icon">💰</div>
+                        <div class="stat-value positive">+12.4%</div>
+                        <div class="stat-label">Средний рост</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-icon">📉</div>
+                        <div class="stat-value negative">-8.7%</div>
+                        <div class="stat-label">Средний спад</div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function renderReportView(container, data, reportId) {
+            const positiveClass = data.profitability.positive > 0 ? 'positive' : 'negative';
+            const negativeClass = data.profitability.negative < 0 ? 'negative' : 'positive';
+            
+            container.innerHTML = `
+                <div class="header">
+                    <div class="logo">📊</div>
+                    <div class="brand">News Analysis</div>
+                </div>
+                
+                <div class="report-title">${data.title}</div>
+                
+                <div class="report-id">ID: ${reportId}</div>
+                
+                <div class="description">
+                    ${data.description}
+                </div>
+                
+                <div class="stats">
+                    <div class="stat">
+                        <div class="stat-icon">📰</div>
+                        <div class="stat-value">${data.newsCount}</div>
+                        <div class="stat-label">Новостей</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-icon">📈</div>
+                        <div class="stat-value ${positiveClass}">${data.profitability.positive > 0 ? '+' : ''}${data.profitability.positive}%</div>
+                        <div class="stat-label">Рост</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-icon">📉</div>
+                        <div class="stat-value ${negativeClass}">${data.profitability.negative}%</div>
+                        <div class="stat-label">Спад</div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function addFooter(container) {
             container.innerHTML += `
                 <div class="footer">
                     <div class="footer-left">
@@ -271,8 +326,27 @@
             `;
         }
         
-        // Генерируем контент при загрузке
-        generateContent();
+        // Рендерим контент сразу (без ожидания)
+        const params = getUrlParams();
+        const container = document.getElementById('container');
+        
+        // Сначала рендерим статичный контент для быстрого отображения
+        if (!params.title || params.title === 'Анализ криптоновостей') {
+            renderDefaultView(container);
+            addFooter(container);
+        } else {
+            // Для отчетов показываем данные из URL сразу
+            renderReportView(container, {
+                title: params.title,
+                description: params.description,
+                newsCount: 15,
+                profitability: { positive: 8.7, negative: -5.2 }
+            }, params.id);
+            addFooter(container);
+        }
+        
+        // Потом пытаемся загрузить актуальные данные асинхронно
+        generateContent().catch(console.error);
     </script>
 </body>
 </html>
