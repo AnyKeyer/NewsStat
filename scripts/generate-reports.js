@@ -27,7 +27,7 @@ const createReportHTML = (reportId, title = '', description = '') => `<!DOCTYPE 
     <meta property="og:site_name" content="News Analysis" />
     <meta property="og:title" content="📊 ${title || `Отчет ${reportId}`} | News Analysis" />
     <meta property="og:description" content="${description || `🚀 Детальный анализ влияния криптоновостей на токены. Профессиональная статистика роста и падения на основе медийных событий в отчете ${reportId}.`}" />
-    <meta property="og:image" content="https://anykeyer.github.io/NewsStat/og-image.html?title=${encodeURIComponent(title || `Отчет ${reportId}`)}&id=${reportId}&description=${encodeURIComponent(description || `Анализ криптоновостей ${reportId}`)}" />
+    <meta property="og:image" content="https://anykeyer.github.io/NewsStat/og-images/${reportId}.html" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta property="og:url" content="https://anykeyer.github.io/NewsStat/report/${reportId}" />
@@ -36,7 +36,7 @@ const createReportHTML = (reportId, title = '', description = '') => `<!DOCTYPE 
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="📊 ${title || `Отчет ${reportId}`} | News Analysis" />
     <meta name="twitter:description" content="${description || `🚀 Детальный анализ влияния криптоновостей на токены в отчете ${reportId}.`}" />
-    <meta name="twitter:image" content="https://anykeyer.github.io/NewsStat/og-image.html?title=${encodeURIComponent(title || `Отчет ${reportId}`)}&id=${reportId}&description=${encodeURIComponent(description || `Анализ криптоновостей ${reportId}`)}" />
+    <meta name="twitter:image" content="https://anykeyer.github.io/NewsStat/og-images/${reportId}.html" />
     
     <!-- Redirect script for SPA -->
     <script>
@@ -316,9 +316,13 @@ const createOGImageHTML = (title, reportId, description = '') => `<!DOCTYPE html
 
 // Создаем директории
 const reportsDir = path.join(__dirname, '../dist/report');
+const ogImagesDir = path.join(__dirname, '../dist/og-images');
 
 if (!fs.existsSync(reportsDir)) {
   fs.mkdirSync(reportsDir, { recursive: true });
+}
+if (!fs.existsSync(ogImagesDir)) {
+  fs.mkdirSync(ogImagesDir, { recursive: true });
 }
 
 // Импортируем данные отчетов из централизованного сервиса
@@ -352,7 +356,12 @@ sampleReports.forEach(report => {
   const htmlContent = createReportHTML(report.id, report.title, report.description);
   fs.writeFileSync(path.join(reportPath, 'index.html'), htmlContent);
   
+  // Создаем статичное OG-изображение для отчета
+  const ogImageContent = createOGImageHTML(report.title, report.id, report.description);
+  fs.writeFileSync(path.join(ogImagesDir, `${report.id}.html`), ogImageContent);
+  
   console.log(`✅ Создан файл: /report/${report.id}/index.html`);
+  console.log(`✅ Создано OG-изображение: /og-images/${report.id}.html`);
 });
 
 console.log(`\n🎉 Генерация завершена! Создано ${sampleReports.length} статических страниц отчетов.`);

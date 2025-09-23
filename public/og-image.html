@@ -170,36 +170,34 @@
     </style>
 </head>
 <body>
-    <div class="container" id="container">
+    <div class="container">
         <div class="header">
             <div class="logo">📊</div>
             <div class="brand">News Analysis</div>
         </div>
         
-        <div class="report-title" id="report-title">Анализ криптоновостей</div>
+        <div class="report-title">Анализ криптоновостей</div>
         
-        <div class="report-id" id="report-id" style="display: none;">ID: report-id</div>
-        
-        <div class="description" id="description">
-            Профессиональный анализ влияния новостей на курсы криптовалют.<br>
+        <div class="description">
+            Профессиональная аналитика влияния новостей на крипторынок.<br>
             Отслеживание роста и падения токенов на основе медийных событий.
         </div>
         
         <div class="stats">
             <div class="stat">
                 <div class="stat-icon">📈</div>
-                <div class="stat-value" id="stat1-value">247</div>
-                <div class="stat-label" id="stat1-label">Всего отчетов</div>
+                <div class="stat-value">247</div>
+                <div class="stat-label">Всего отчетов</div>
             </div>
             <div class="stat">
                 <div class="stat-icon">💰</div>
-                <div class="stat-value positive" id="stat2-value">+12.4%</div>
-                <div class="stat-label" id="stat2-label">Средний рост</div>
+                <div class="stat-value positive">+12.4%</div>
+                <div class="stat-label">Средний рост</div>
             </div>
             <div class="stat">
                 <div class="stat-icon">📉</div>
-                <div class="stat-value negative" id="stat3-value">-8.7%</div>
-                <div class="stat-label" id="stat3-label">Средний спад</div>
+                <div class="stat-value negative">-8.7%</div>
+                <div class="stat-label">Средний спад</div>
             </div>
         </div>
         
@@ -211,8 +209,6 @@
             <div>Криптоаналитика</div>
         </div>
     </div>
-    
-    <script>
         function getUrlParams() {
             const params = new URLSearchParams(window.location.search);
             return {
@@ -364,42 +360,56 @@
             `;
         }
         
-        // Простое обновление контента на основе URL параметров
-        try {
-            const params = getUrlParams();
-            
-            if (params.title && params.title !== 'Анализ криптоновостей') {
-                // Обновляем для конкретного отчета
-                const titleEl = document.getElementById('report-title');
-                const idEl = document.getElementById('report-id');
-                const descEl = document.getElementById('description');
+        // Детекция ботов социальных сетей
+        function isSocialBot() {
+            const userAgent = navigator.userAgent.toLowerCase();
+            return userAgent.includes('facebookexternalhit') || 
+                   userAgent.includes('twitterbot') || 
+                   userAgent.includes('telegrambot') ||
+                   userAgent.includes('whatsapp') ||
+                   userAgent.includes('linkedinbot') ||
+                   userAgent.includes('slackbot') ||
+                   userAgent.includes('discordbot');
+        }
+        
+        // Только обновляем контент если это НЕ бот социальной сети
+        if (!isSocialBot()) {
+            try {
+                const params = getUrlParams();
                 
-                if (titleEl) titleEl.textContent = params.title;
-                if (idEl) {
-                    idEl.textContent = `ID: ${params.id}`;
-                    idEl.style.display = 'inline-block';
+                if (params.title && params.title !== 'Анализ криптоновостей') {
+                    // Обновляем для конкретного отчета (только для обычных браузеров)
+                    const titleEl = document.getElementById('report-title');
+                    const idEl = document.getElementById('report-id');
+                    const descEl = document.getElementById('description');
+                    
+                    if (titleEl) titleEl.textContent = params.title;
+                    if (idEl) {
+                        idEl.textContent = `ID: ${params.id}`;
+                        idEl.style.display = 'inline-block';
+                    }
+                    if (descEl) descEl.textContent = params.description;
+                    
+                    // Обновляем статистику для отчета
+                    const stat1Val = document.getElementById('stat1-value');
+                    const stat1Lab = document.getElementById('stat1-label');
+                    if (stat1Val) stat1Val.textContent = '15';
+                    if (stat1Lab) stat1Lab.textContent = 'Новостей';
+                    
+                    const stat2Val = document.getElementById('stat2-value');
+                    const stat2Lab = document.getElementById('stat2-label');
+                    if (stat2Val) stat2Val.textContent = '+8.7%';
+                    if (stat2Lab) stat2Lab.textContent = 'Рост';
+                    
+                    const stat3Val = document.getElementById('stat3-value');
+                    const stat3Lab = document.getElementById('stat3-label');
+                    if (stat3Val) stat3Val.textContent = '-5.2%';
+                    if (stat3Lab) stat3Lab.textContent = 'Спад';
                 }
-                if (descEl) descEl.textContent = params.description;
-                
-                // Обновляем статистику для отчета
-                const stat1Val = document.getElementById('stat1-value');
-                const stat1Lab = document.getElementById('stat1-label');
-                if (stat1Val) stat1Val.textContent = '15';
-                if (stat1Lab) stat1Lab.textContent = 'Новостей';
-                
-                const stat2Val = document.getElementById('stat2-value');
-                const stat2Lab = document.getElementById('stat2-label');
-                if (stat2Val) stat2Val.textContent = '+8.7%';
-                if (stat2Lab) stat2Lab.textContent = 'Рост';
-                
-                const stat3Val = document.getElementById('stat3-value');
-                const stat3Lab = document.getElementById('stat3-label');
-                if (stat3Val) stat3Val.textContent = '-5.2%';
-                if (stat3Lab) stat3Lab.textContent = 'Спад';
+            } catch (error) {
+                // Если что-то пошло не так, просто показываем дефолтный контент
+                console.log('Using default content for preview');
             }
-        } catch (error) {
-            // Если что-то пошло не так, просто показываем дефолтный контент
-            console.log('Using default content for preview');
         }
     </script>
 </body>
