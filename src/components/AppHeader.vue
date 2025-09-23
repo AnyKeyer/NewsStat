@@ -69,25 +69,6 @@
             </button>
           </div>
         </form>
-        
-        <!-- Подсказки с логинами -->
-        <div class="login-hints">
-          <h4>Тестовые аккаунты:</h4>
-          <div class="hint-grid">
-            <button type="button" @click="fillCredentials('admin', 'admin123')" class="hint-btn">
-              admin / admin123
-            </button>
-            <button type="button" @click="fillCredentials('analyst', 'analyst123')" class="hint-btn">
-              analyst / analyst123
-            </button>
-            <button type="button" @click="fillCredentials('user', 'user123')" class="hint-btn">
-              user / user123
-            </button>
-            <button type="button" @click="fillCredentials('demo', 'demo123')" class="hint-btn">
-              demo / demo123
-            </button>
-          </div>
-        </div>
       </div>
     </div>
   </header>
@@ -140,11 +121,6 @@ async function handleLogin() {
   if (success) {
     closeLoginModal()
   }
-}
-
-function fillCredentials(username: string, password: string) {
-  loginForm.username = username
-  loginForm.password = password
 }
 </script>
 
@@ -226,40 +202,7 @@ function fillCredentials(username: string, password: string) {
   margin-top: 1rem;
 }
 
-.login-hints {
-  margin-top: 2rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid var(--border);
-}
 
-.login-hints h4 {
-  color: var(--text-secondary);
-  margin-bottom: 1rem;
-  font-size: 0.875rem;
-  text-align: center;
-}
-
-.hint-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.5rem;
-}
-
-.hint-btn {
-  padding: 0.5rem 0.75rem;
-  background: var(--bg-tertiary);
-  color: var(--text-secondary);
-  border: 1px solid var(--border);
-  border-radius: 0.375rem;
-  cursor: pointer;
-  font-size: 0.75rem;
-  transition: all 0.2s ease;
-}
-
-.hint-btn:hover {
-  background: var(--border);
-  color: var(--text-primary);
-}
 
 @media (max-width: 768px) {
   .nav {
