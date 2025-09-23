@@ -9,4 +9,11 @@ const app = createApp(App)
 app.use(createPinia())
 app.use(router)
 
+// Обработка перенаправлений от статических страниц отчетов
+const redirectPath = sessionStorage.getItem('redirectPath')
+if (redirectPath) {
+  sessionStorage.removeItem('redirectPath')
+  router.push(redirectPath)
+}
+
 app.mount('#app')
