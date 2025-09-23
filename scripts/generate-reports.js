@@ -27,7 +27,7 @@ const createReportHTML = (reportId, title = '', description = '') => `<!DOCTYPE 
     <meta property="og:site_name" content="News Analysis" />
     <meta property="og:title" content="📊 ${title || `Отчет ${reportId}`} | News Analysis" />
     <meta property="og:description" content="${description || `🚀 Детальный анализ влияния криптоновостей на токены. Профессиональная статистика роста и падения на основе медийных событий в отчете ${reportId}.`}" />
-    <meta property="og:image" content="https://anykeyer.github.io/NewsStat/og-images/${reportId}.svg" />
+    <meta property="og:image" content="https://anykeyer.github.io/NewsStat/og-preview.html" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta property="og:url" content="https://anykeyer.github.io/NewsStat/report/${reportId}" />
@@ -36,7 +36,7 @@ const createReportHTML = (reportId, title = '', description = '') => `<!DOCTYPE 
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="📊 ${title || `Отчет ${reportId}`} | News Analysis" />
     <meta name="twitter:description" content="${description || `🚀 Детальный анализ влияния криптоновостей на токены в отчете ${reportId}.`}" />
-    <meta name="twitter:image" content="https://anykeyer.github.io/NewsStat/og-images/${reportId}.svg" />
+    <meta name="twitter:image" content="https://anykeyer.github.io/NewsStat/og-preview.html" />
     
     <!-- Redirect script for SPA -->
     <script>
@@ -98,67 +98,7 @@ const createReportHTML = (reportId, title = '', description = '') => `<!DOCTYPE 
 </body>
 </html>`;
 
-// Функция для создания SVG OG-изображения
-const createOGImageSVG = (title, reportId, description = '') => `<svg width="1200" height="630" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#0f172a;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#1e293b;stop-opacity:1" />
-    </linearGradient>
-    <pattern id="grid" width="50" height="50" patternUnits="userSpaceOnUse">
-      <path d="M 50 0 L 0 0 0 50" fill="none" stroke="rgba(59,130,246,0.1)" stroke-width="1"/>
-    </pattern>
-  </defs>
-  
-  <!-- Background -->
-  <rect width="1200" height="630" fill="url(#bg)"/>
-  <rect width="1200" height="630" fill="url(#grid)"/>
-  
-  <!-- Main container -->
-  <rect x="50" y="40" width="1100" height="550" rx="24" fill="rgba(30,41,59,0.95)" stroke="#475569" stroke-width="2"/>
-  
-  <!-- Header -->
-  <text x="100" y="140" font-family="system-ui,-apple-system,sans-serif" font-size="56" fill="#3b82f6">📊</text>
-  <text x="180" y="130" font-family="system-ui,-apple-system,sans-serif" font-size="32" font-weight="700" fill="#3b82f6">News Analysis</text>
-  
-  <!-- Title -->
-  <text x="100" y="220" font-family="system-ui,-apple-system,sans-serif" font-size="48" font-weight="700" fill="#f1f5f9">${title.length > 40 ? title.substring(0, 40) + '...' : title}</text>
-  
-  <!-- ID -->
-  <rect x="100" y="240" width="${120 + reportId.length * 8}" height="35" rx="8" fill="rgba(51,65,85,0.6)"/>
-  <text x="115" y="260" font-family="Courier New,monospace" font-size="18" fill="#64748b">ID: ${reportId}</text>
-  
-  <!-- Description -->
-  <text x="100" y="320" font-family="system-ui,-apple-system,sans-serif" font-size="22" fill="#cbd5e1">${description.length > 80 ? description.substring(0, 80) + '...' : description}</text>
-  
-  <!-- Stats -->
-  <!-- Stat 1 -->
-  <rect x="100" y="370" width="300" height="120" rx="16" fill="rgba(51,65,85,0.8)" stroke="#475569"/>
-  <rect x="100" y="370" width="300" height="3" fill="#3b82f6"/>
-  <text x="250" y="400" font-family="system-ui,-apple-system,sans-serif" font-size="24" text-anchor="middle">📰</text>
-  <text x="250" y="440" font-family="system-ui,-apple-system,sans-serif" font-size="28" font-weight="700" fill="white" text-anchor="middle">15</text>
-  <text x="250" y="465" font-family="system-ui,-apple-system,sans-serif" font-size="13" fill="#94a3b8" text-anchor="middle">НОВОСТЕЙ</text>
-  
-  <!-- Stat 2 -->
-  <rect x="450" y="370" width="300" height="120" rx="16" fill="rgba(51,65,85,0.8)" stroke="#475569"/>
-  <rect x="450" y="370" width="300" height="3" fill="#10b981"/>
-  <text x="600" y="400" font-family="system-ui,-apple-system,sans-serif" font-size="24" text-anchor="middle">📈</text>
-  <text x="600" y="440" font-family="system-ui,-apple-system,sans-serif" font-size="28" font-weight="700" fill="#10b981" text-anchor="middle">+8.7%</text>
-  <text x="600" y="465" font-family="system-ui,-apple-system,sans-serif" font-size="13" fill="#94a3b8" text-anchor="middle">РОСТ</text>
-  
-  <!-- Stat 3 -->
-  <rect x="800" y="370" width="300" height="120" rx="16" fill="rgba(51,65,85,0.8)" stroke="#475569"/>
-  <rect x="800" y="370" width="300" height="3" fill="#ef4444"/>
-  <text x="950" y="400" font-family="system-ui,-apple-system,sans-serif" font-size="24" text-anchor="middle">📉</text>
-  <text x="950" y="440" font-family="system-ui,-apple-system,sans-serif" font-size="28" font-weight="700" fill="#ef4444" text-anchor="middle">-5.2%</text>
-  <text x="950" y="465" font-family="system-ui,-apple-system,sans-serif" font-size="13" fill="#94a3b8" text-anchor="middle">СПАД</text>
-  
-  <!-- Footer -->
-  <rect x="100" y="530" width="24" height="24" rx="6" fill="#3b82f6"/>
-  <text x="112" y="547" font-family="system-ui,-apple-system,sans-serif" font-size="12" fill="white" text-anchor="middle">📊</text>
-  <text x="140" y="547" font-family="system-ui,-apple-system,sans-serif" font-size="16" fill="#64748b">anykeyer.github.io/NewsStat</text>
-  <text x="1050" y="547" font-family="system-ui,-apple-system,sans-serif" font-size="16" fill="#64748b" text-anchor="end">Криптоаналитика</text>
-</svg>`;
+
 
 // Функция для создания статичного OG-изображения
 const createOGImageHTML = (title, reportId, description = '') => `<!DOCTYPE html>
@@ -376,15 +316,11 @@ const createOGImageHTML = (title, reportId, description = '') => `<!DOCTYPE html
 </body>
 </html>`;
 
-// Создаем директории
+// Создаем директорию для отчетов
 const reportsDir = path.join(__dirname, '../dist/report');
-const ogImagesDir = path.join(__dirname, '../dist/og-images');
 
 if (!fs.existsSync(reportsDir)) {
   fs.mkdirSync(reportsDir, { recursive: true });
-}
-if (!fs.existsSync(ogImagesDir)) {
-  fs.mkdirSync(ogImagesDir, { recursive: true });
 }
 
 // Импортируем данные отчетов из централизованного сервиса
@@ -418,14 +354,9 @@ sampleReports.forEach(report => {
   const htmlContent = createReportHTML(report.id, report.title, report.description);
   fs.writeFileSync(path.join(reportPath, 'index.html'), htmlContent);
   
-  // Создаем SVG OG-изображение для отчета
-  const ogImageSVG = createOGImageSVG(report.title, report.id, report.description);
-  fs.writeFileSync(path.join(ogImagesDir, `${report.id}.svg`), ogImageSVG);
-  
   console.log(`✅ Создан файл: /report/${report.id}/index.html`);
-  console.log(`✅ Создано SVG-изображение: /og-images/${report.id}.svg`);
 });
 
 console.log(`\n🎉 Генерация завершена! Создано ${sampleReports.length} статических страниц отчетов.`);
-console.log('📊 Используется универсальный og-image.html с динамической загрузкой данных');
-console.log('🔄 Новые отчеты автоматически получат правильные превью!');
+console.log('📊 Используется универсальный og-preview.html для Telegram');
+console.log('� Все отчеты используют одно общее превью изображение');
