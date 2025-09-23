@@ -27,7 +27,7 @@ const createReportHTML = (reportId, title = '', description = '') => `<!DOCTYPE 
     <meta property="og:site_name" content="News Analysis" />
     <meta property="og:title" content="📊 ${title || `Отчет ${reportId}`} | News Analysis" />
     <meta property="og:description" content="${description || `🚀 Детальный анализ влияния криптоновостей на токены. Профессиональная статистика роста и падения на основе медийных событий в отчете ${reportId}.`}" />
-    <meta property="og:image" content="https://og-image.vercel.app/📊%20Report%20${encodeURIComponent(reportId)}.png?theme=dark&md=1&fontSize=75px&images=https%3A%2F%2Fcdn.jsdelivr.net%2Fgh%2Fremojify%2Femojify.js%40master%2Fsrc%2Femojis%2F1f4ca.png" />
+    <meta property="og:image" content="https://anykeyer.github.io/NewsStat/og-image.html?title=${encodeURIComponent(title || `Отчет ${reportId}`)}&id=${reportId}" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta property="og:url" content="https://anykeyer.github.io/NewsStat/report/${reportId}" />
@@ -36,7 +36,7 @@ const createReportHTML = (reportId, title = '', description = '') => `<!DOCTYPE 
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="📊 ${title || `Отчет ${reportId}`} | News Analysis" />
     <meta name="twitter:description" content="${description || `🚀 Детальный анализ влияния криптоновостей на токены в отчете ${reportId}.`}" />
-    <meta name="twitter:image" content="https://og-image.vercel.app/📊%20Report%20${encodeURIComponent(reportId)}.png?theme=dark&md=1&fontSize=75px" />
+    <meta name="twitter:image" content="https://anykeyer.github.io/NewsStat/og-image.html?title=${encodeURIComponent(title || `Отчет ${reportId}`)}&id=${reportId}" />
     
     <!-- Redirect script for SPA -->
     <script>
