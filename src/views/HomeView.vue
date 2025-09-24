@@ -35,26 +35,25 @@
           <div 
             v-for="report in dateGroup.reports" 
             :key="report.id" 
-            class="report-card"
+            class="report-card card card-hover fade-in"
             @click="navigateToReport(report.id)"
           >
             <div class="report-content">
               <div class="report-header">
-                <h3>{{ report.title }}</h3>
-                <span class="report-time">{{ formatTime(report.createdAt) }}</span>
+                <div class="report-title-block">
+                  <h3>{{ report.title }}</h3>
+                  <span class="report-time">{{ formatTime(report.createdAt) }}</span>
+                </div>
+                <div class="mini-stats" v-if="statsMap[report.id]">
+                  <span class="badge accent" v-if="statsMap[report.id].totalNews">{{ statsMap[report.id].totalNews }} шт</span>
+                  <span class="badge success" v-if="statsMap[report.id].averageGrowth && statsMap[report.id].averageGrowth > 0">+{{ statsMap[report.id].averageGrowth.toFixed(1) }}%</span>
+                  <span class="badge danger" v-if="statsMap[report.id].averageDecline && statsMap[report.id].averageDecline > 0">-{{ statsMap[report.id].averageDecline.toFixed(1) }}%</span>
+                </div>
               </div>
-              <div class="report-stats">
-                <div class="stat-item">
-                  <span class="stat-label">📈 Новости:</span>
-                  <span class="stat-value">{{ getReportStats(report.id)?.totalNews || '...' }}</span>
-                </div>
-                <div class="stat-item" v-if="getReportStats(report.id)?.averageGrowth">
-                  <span class="stat-label">💰 Средний рост:</span>
-                  <span class="stat-value positive">+{{ getReportStats(report.id)?.averageGrowth.toFixed(1) }}%</span>
-                </div>
-                <div class="stat-item" v-if="getReportStats(report.id)?.averageDecline">
-                  <span class="stat-label">📉 Средний спад:</span>
-                  <span class="stat-value negative">{{ getReportStats(report.id)?.averageDecline.toFixed(1) }}%</span>
+              <div class="report-progress" v-if="statsMap[report.id]">
+                <div class="progress-bar mini">
+                  <div class="seg pos" :style="{ width: positivePercent(report.id) + '%' }"></div>
+                  <div class="seg neg" :style="{ width: negativePercent(report.id) + '%' }"></div>
                 </div>
               </div>
             </div>
@@ -101,8 +100,11 @@ const router = useRouter()
 const reportStore = useReportStore()
 const authStore = useAuthStore()
 
-// Кэш статистики отчетов
+// Кэш статистики отчетов (загружаем по требованию)
 const reportStatsCache = ref<Map<string, ReportStatistics>>(new Map())
+
+// Удобное отображение кэша для шаблона
+const statsMap = computed(() => Object.fromEntries(reportStatsCache.value.entries()))
 
 // Проверяем права пользователя
 const canDeleteReports = computed(() => {
@@ -173,6 +175,17 @@ function formatTime(date: Date): string {
 
 function getReportStats(reportId: string): ReportStatistics | null {
   return reportStatsCache.value.get(reportId) || null
+}
+
+function positivePercent(reportId: string): number {
+  const stats = getReportStats(reportId)
+  if (!stats || stats.totalNews === 0) return 0
+  return (stats.positiveNewsCount / stats.totalNews) * 100
+}
+function negativePercent(reportId: string): number {
+  const stats = getReportStats(reportId)
+  if (!stats || stats.totalNews === 0) return 0
+  return (stats.negativeNewsCount / stats.totalNews) * 100
 }
 
 async function loadReportStats(reportId: string) {
@@ -318,74 +331,28 @@ onActivated(() => {
   gap: 0.75rem;
 }
 
-.report-card {
-  background: var(--bg-secondary);
-  border: 1px solid var(--border);
-  border-radius: 0.75rem;
-  padding: 1.25rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-}
-
-.report-card:hover {
-  background: var(--bg-tertiary);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px var(--shadow);
-}
+.report-card { display:flex; justify-content:space-between; align-items:stretch; gap:1rem; cursor:pointer; }
 
 .report-content {
   flex: 1;
 }
 
-.report-header {
-  margin-bottom: 0.75rem;
-}
-
-.report-header h3 {
-  color: var(--text-primary);
-  margin-bottom: 0.25rem;
-  font-size: 1.1rem;
-  font-weight: 600;
-}
+.report-header { display:flex; justify-content:space-between; align-items:flex-start; gap:1rem; margin-bottom:.65rem; }
+.report-header h3 { color:var(--text-primary); margin:0 0 .25rem; font-size:1.05rem; font-weight:600; letter-spacing:.3px; }
+.report-title-block { display:flex; flex-direction:column; }
+.mini-stats { display:flex; gap:.35rem; flex-wrap:wrap; }
+.report-progress { margin-top:.25rem; }
+.progress-bar.mini { height:6px; background:var(--bg-tertiary); border-radius:4px; display:flex; overflow:hidden; border:1px solid var(--border); }
+.progress-bar.mini .seg { height:100%; transition:width .6s ease; }
+.progress-bar.mini .seg.pos { background: linear-gradient(90deg, rgba(16,185,129,0.9), rgba(16,185,129,0.45)); }
+.progress-bar.mini .seg.neg { background: linear-gradient(90deg, rgba(239,68,68,0.85), rgba(239,68,68,0.45)); }
 
 .report-time {
   color: var(--text-muted);
   font-size: 0.875rem;
 }
 
-.report-stats {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-}
-
-.stat-item {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-}
-
-.stat-label {
-  color: var(--text-secondary);
-  font-size: 0.8rem;
-}
-
-.stat-value {
-  color: var(--text-primary);
-  font-size: 0.8rem;
-  font-weight: 600;
-}
-
-.stat-value.positive {
-  color: var(--success, #10b981);
-}
-
-.stat-value.negative {
-  color: var(--danger, #ef4444);
-}
+.report-stats, .stat-item, .stat-label, .stat-value { display:none; }
 
 .report-actions {
   display: flex;

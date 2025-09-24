@@ -1,5 +1,5 @@
 <template>
-  <header class="header">
+  <header class="header glass" :class="{ scrolled: scrolled }">
     <div class="container">
       <nav class="nav">
         <router-link to="/" class="logo">
@@ -81,6 +81,7 @@ import { useRouter } from 'vue-router'
 import type { LoginCredentials } from '@/types'
 
 const authStore = useAuthStore()
+const scrolled = ref(false)
 const router = useRouter()
 
 const showLoginModal = ref(false)
@@ -122,14 +123,39 @@ async function handleLogin() {
     closeLoginModal()
   }
 }
+
+function handleScroll() {
+  scrolled.value = window.scrollY > 8
+}
+
+window.addEventListener('scroll', handleScroll, { passive: true })
+</script>
+
+<script lang="ts">
+export default {
+  unmounted() {
+    window.removeEventListener('scroll', (this as any).handleScroll)
+  }
+}
 </script>
 
 <style scoped>
 .header {
-  background: var(--bg-secondary);
-  border-bottom: 1px solid var(--border);
-  padding: 1rem 0;
-  box-shadow: 0 2px 4px var(--shadow);
+  background: rgba(30,41,59,0.72);
+  backdrop-filter: blur(14px) saturate(160%);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
+  border-bottom: 1px solid var(--glass-border);
+  padding: 0.85rem 0 .9rem;
+  box-shadow: 0 4px 14px -4px rgba(0,0,0,0.55);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  transition: background .35s ease, box-shadow .35s ease, border-color .35s ease;
+}
+.header.scrolled {
+  background: rgba(30,41,59,0.9);
+  box-shadow: 0 6px 22px -6px rgba(0,0,0,0.65);
+  border-color: rgba(255,255,255,0.12);
 }
 
 .nav {
@@ -140,11 +166,26 @@ async function handleLogin() {
 }
 
 .logo {
-  font-size: 1.5rem;
-  font-weight: bold;
+  font-size: 1.35rem;
+  font-weight: 700;
   text-decoration: none;
   color: var(--text-primary);
+  letter-spacing: .5px;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
 }
+.logo:after {
+  content: '';
+  position: absolute;
+  bottom: -2px; left: 0;
+  width: 0; height: 2px;
+  background: linear-gradient(90deg,var(--accent),var(--success));
+  transition: width .4s cubic-bezier(.4,.14,.3,1);
+  border-radius: 2px;
+}
+.logo:hover:after { width: 100%; }
 
 .auth-section {
   display: flex;
@@ -171,28 +212,41 @@ async function handleLogin() {
 }
 
 .modal-content {
-  background: var(--bg-secondary);
-  padding: 2rem;
-  border-radius: 0.75rem;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+  background: linear-gradient(155deg, var(--bg-secondary) 0%, var(--bg-tertiary) 120%);
+  padding: 2rem 2.1rem 2.1rem;
+  border-radius: 1rem;
+  box-shadow: 0 18px 40px -8px rgba(0,0,0,0.6), 0 2px 6px -1px rgba(0,0,0,0.5);
   border: 1px solid var(--border);
-  max-width: 500px;
-  width: 90%;
+  max-width: 480px;
+  width: 92%;
   max-height: 90vh;
   overflow-y: auto;
+  position: relative;
+}
+.modal-content:before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(145deg, rgba(255,255,255,0.05), rgba(255,255,255,0));
+  pointer-events: none;
 }
 
 .modal-content h2 {
-  margin-bottom: 1.5rem;
+  margin-bottom: 1.25rem;
   color: var(--text-primary);
   text-align: center;
+  font-size: 1.35rem;
+  letter-spacing: .5px;
+  font-weight: 600;
 }
 
 .error-text {
   color: var(--danger);
-  font-size: 0.875rem;
-  margin: 0.5rem 0;
+  font-size: 0.8rem;
+  margin: 0.35rem 0 .25rem;
   text-align: center;
+  font-weight: 500;
+  letter-spacing: .3px;
 }
 
 .modal-actions {
