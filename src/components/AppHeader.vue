@@ -25,61 +25,63 @@
       </nav>
     </div>
     
-    <!-- Модальное окно входа -->
-    <div v-if="showLoginModal" class="modal-overlay" @click="closeLoginModal">
-      <div class="modal-content" @click.stop>
-        <h2>Вход в систему</h2>
-        <form @submit.prevent="handleLogin">
-          <div class="form-group">
-            <label for="username" class="form-label">Логин</label>
-            <input
-              id="username"
-              v-model="loginForm.username"
-              type="text"
-              class="form-input"
-              placeholder="Введите логин"
-              required
-              ref="loginInput"
-              :disabled="authStore.loading"
-            />
-          </div>
-          <div class="form-group">
-            <label for="password" class="form-label">Пароль</label>
-            <input
-              id="password"
-              v-model="loginForm.password"
-              type="password"
-              class="form-input"
-              placeholder="Введите пароль"
-              required
-              :disabled="authStore.loading"
-            />
-          </div>
-          
-          <div v-if="authStore.error" class="error-text">
-            {{ authStore.error }}
-          </div>
-          
-          <div class="modal-actions">
-            <button 
-              type="submit" 
-              class="btn btn-primary" 
-              :disabled="!isFormValid || authStore.loading"
-            >
-              {{ authStore.loading ? 'Вход...' : 'Войти' }}
-            </button>
-            <button type="button" @click="closeLoginModal" class="btn btn-secondary">
-              Отмена
-            </button>
-          </div>
-        </form>
+    <!-- Модальное окно входа вынесено в body через teleport, чтобы избежать смещений -->
+    <teleport to="body">
+      <div v-if="showLoginModal" class="modal-overlay" @click="closeLoginModal">
+        <div class="modal-content" @click.stop>
+          <h2>Вход в систему</h2>
+          <form @submit.prevent="handleLogin">
+            <div class="form-group">
+              <label for="username" class="form-label">Логин</label>
+              <input
+                id="username"
+                v-model="loginForm.username"
+                type="text"
+                class="form-input"
+                placeholder="Введите логин"
+                required
+                ref="loginInput"
+                :disabled="authStore.loading"
+              />
+            </div>
+            <div class="form-group">
+              <label for="password" class="form-label">Пароль</label>
+              <input
+                id="password"
+                v-model="loginForm.password"
+                type="password"
+                class="form-input"
+                placeholder="Введите пароль"
+                required
+                :disabled="authStore.loading"
+              />
+            </div>
+            
+            <div v-if="authStore.error" class="error-text">
+              {{ authStore.error }}
+            </div>
+            
+            <div class="modal-actions">
+              <button 
+                type="submit" 
+                class="btn btn-primary" 
+                :disabled="!isFormValid || authStore.loading"
+              >
+                {{ authStore.loading ? 'Вход...' : 'Войти' }}
+              </button>
+              <button type="button" @click="closeLoginModal" class="btn btn-secondary">
+                Отмена
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
-    </div>
+    </teleport>
   </header>
 </template>
 
 <script setup lang="ts">
-import { ref, nextTick, computed, reactive } from 'vue'
+import { ref, nextTick, computed, reactive, watch } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useRouter } from 'vue-router'
 import type { LoginCredentials } from '@/types'
@@ -131,6 +133,16 @@ async function handleLogin() {
 function handleScroll() {
   scrolled.value = window.scrollY > 8
 }
+
+// Блокируем скролл страницы когда открыто модальное окно
+watch(showLoginModal, (val) => {
+  const body = document.body
+  if (val) {
+    body.classList.add('no-scroll')
+  } else {
+    body.classList.remove('no-scroll')
+  }
+})
 
 window.addEventListener('scroll', handleScroll, { passive: true })
 </script>
@@ -258,7 +270,7 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
+  z-index: 9999; /* гарантированно поверх header */
 }
 
 .modal-content {
@@ -319,5 +331,11 @@ export default {
     flex-wrap: wrap;
     justify-content: center;
   }
+}
+
+/* Отключаем прокрутку body при открытом модальном окне */
+:global(body.no-scroll) {
+  overflow: hidden;
+  padding-right: var(--scrollbar-compensation, 0);
 }
 </style>
