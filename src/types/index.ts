@@ -4,6 +4,10 @@ export interface NewsItem {
   text: string
   url: string
   tokenName: string
+  /** Ссылка на страницу токена (например CoinGecko / TradingView / DexScreener) */
+  tokenUrl?: string
+  /** Ссылка на скриншот / изображение (можно imgur / прямой CDN) */
+  screenshotUrl?: string
   comment: string
   impact: number // процент изменения (может быть положительным или отрицательным)
   date: Date

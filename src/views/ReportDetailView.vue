@@ -105,7 +105,16 @@
                 <div class="title-block">
                   <h3 class="news-title">{{ newsItem.title }}</h3>
                   <div class="token-badges">
-                    <span class="badge accent token-badge" v-if="newsItem.tokenName">{{ newsItem.tokenName }}</span>
+                    <template v-if="newsItem.tokenName">
+                      <a v-if="newsItem.tokenUrl"
+                         :href="newsItem.tokenUrl"
+                         target="_blank"
+                         rel="noopener"
+                         :class="['badge','token-badge','token-badge-link', impactTone(newsItem)]"
+                         :title="'Открыть страницу токена'"
+                      >{{ newsItem.tokenName }}</a>
+                      <span v-else :class="['badge','token-badge', impactTone(newsItem)]">{{ newsItem.tokenName }}</span>
+                    </template>
                     <span class="badge warning token-badge" v-if="newsItem.needsSoftware" title="Без софта не взять">⚙️ Софт</span>
                   </div>
                 </div>
@@ -124,6 +133,13 @@
 
               <div v-if="newsItem.comment" class="news-comment">
                 <strong>Комментарий:</strong> {{ newsItem.comment }}
+              </div>
+
+              <div v-if="newsItem.screenshotUrl" class="extra-links">
+                <a :href="newsItem.screenshotUrl" target="_blank" rel="noopener" class="screenshot-link">🖼️ Скрин</a>
+              </div>
+              <div v-if="resolvedScreenshotUrl(newsItem.screenshotUrl)" class="screenshot-preview">
+                <img :src="resolvedScreenshotUrl(newsItem.screenshotUrl) || ''" @error="onImageError($event)" alt="Скриншот" loading="lazy" />
               </div>
 
               <div class="news-footer">
@@ -226,6 +242,30 @@ function formatDateTime(date: Date): string {
 
 function isoString(date: Date): string {
   return date.toISOString()
+}
+
+function resolvedScreenshotUrl(raw?: string): string | null {
+  if (!raw) return null
+  // Только прямой файл с поддерживаемым расширением
+  if (/\.(png|jpe?g|gif|webp|avif)$/i.test(raw.split('?')[0])) return raw
+  return null
+}
+
+function onImageError(e: Event) {
+  const el = e.target as HTMLImageElement
+  if (!el.dataset.retried && el.src.endsWith('.png')) {
+    el.dataset.retried = '1'
+    // попробуем jpg
+    el.src = el.src.replace(/\.png$/, '.jpg')
+  } else {
+    el.closest('.screenshot-preview')?.classList.add('load-error')
+  }
+}
+
+function impactTone(n: { impact: number }) {
+  if (n.impact > 0) return 'tone-positive'
+  if (n.impact < 0) return 'tone-negative'
+  return 'tone-neutral'
 }
 
 async function loadReport() {
@@ -388,7 +428,33 @@ onUnmounted(() => {
 .title-block { flex:1; min-width:0; }
 .news-title { margin:0 0 .25rem; font-size:1rem; line-height:1.3; color:var(--text-primary); }
 .token-badges { display:flex; gap:.4rem; flex-wrap:wrap; }
-.token-badge { font-size:.65rem; letter-spacing:.5px; }
+.token-badge { 
+  font-size:.75rem; 
+  letter-spacing:.7px; 
+  padding:.45rem .7rem; 
+  font-weight:700; 
+  text-transform:uppercase; 
+  border-radius:.7rem; 
+  background:linear-gradient(135deg,var(--accent) 0%, var(--accent) 55%, var(--accent) 100%);
+  box-shadow:0 2px 6px -2px rgba(0,0,0,.55), 0 0 0 1px rgba(255,255,255,0.08), 0 0 0 2px rgba(99,102,241,0.25);
+  position:relative;
+  display:inline-flex; align-items:center; gap:.3rem;
+}
+.token-badge.tone-positive { background:linear-gradient(135deg,var(--success) 0%, rgba(16,185,129,0.85) 60%, var(--success) 100%); box-shadow:0 2px 8px -2px rgba(16,185,129,.55), 0 0 0 1px rgba(16,185,129,.4), 0 0 0 3px rgba(16,185,129,.15); color:#fff; }
+.token-badge.tone-negative { background:linear-gradient(135deg,var(--danger) 0%, rgba(239,68,68,0.85) 60%, var(--danger) 100%); box-shadow:0 2px 8px -2px rgba(239,68,68,.55), 0 0 0 1px rgba(239,68,68,.4), 0 0 0 3px rgba(239,68,68,.18); color:#fff; }
+.token-badge.tone-neutral { background:linear-gradient(135deg,var(--bg-tertiary) 0%, var(--bg-secondary) 60%, var(--bg-tertiary) 100%); box-shadow:0 2px 6px -2px rgba(0,0,0,.5), inset 0 0 0 1px var(--border); color:var(--text-primary); }
+.token-badge.token-badge-link { 
+  text-decoration:none; 
+  transition:.22s box-shadow,.22s transform,.22s filter; 
+  cursor:pointer;
+}
+.token-badge.token-badge-link:hover { 
+  transform:translateY(-2px); 
+  filter:brightness(1.07);
+  box-shadow:0 6px 18px -6px rgba(0,0,0,.65), 0 0 0 1px var(--accent), 0 0 0 5px rgba(99,102,241,0.35);
+}
+.token-badge.token-badge-link:active { transform:translateY(0) scale(.95); filter:brightness(.94); }
+.token-badge.token-badge-link::after { content:'↗'; font-size:.55rem; opacity:.8; }
 .impact-badge { display:flex; align-items:center; gap:.35rem; font-size:.8rem; font-weight:600; padding:.45rem .7rem; border-radius:999px; background:var(--bg-tertiary); box-shadow:inset 0 0 0 1px var(--border); }
 .impact-badge.positive { color:var(--success); box-shadow:inset 0 0 0 1px rgba(16,185,129,.4); }
 .impact-badge.negative { color:var(--danger); box-shadow:inset 0 0 0 1px rgba(239,68,68,.4); }
@@ -400,11 +466,35 @@ onUnmounted(() => {
 .token-badge.badge.warning { background: rgba(234,179,8,0.15); border-color: rgba(234,179,8,0.55); color:#eab308; }
 .badge.warning { background: var(--warning, #eab308); color:#000; border-color: var(--warning, #eab308); }
 .news-text { color:var(--text-secondary); line-height:1.55; white-space:pre-line; }
-.news-comment { color:var(--text-muted); font-size:.8rem; background:var(--bg-tertiary); border:1px solid var(--border); padding:.65rem .75rem; border-radius:.6rem; }
+.news-comment { 
+  position:relative;
+  color:var(--text-primary);
+  font-size:.75rem;
+  line-height:1.35;
+  background:linear-gradient(145deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.02) 65%, rgba(255,255,255,0.05) 100%), var(--bg-tertiary);
+  border:1px solid var(--border);
+  padding:.7rem .85rem .75rem;
+  border-radius:.75rem;
+  box-shadow:0 2px 4px -2px rgba(0,0,0,.4), inset 0 0 0 1px rgba(255,255,255,0.04);
+  overflow:hidden;
+}
+.news-card.positive .news-comment { border-color:rgba(16,185,129,.45); box-shadow:0 2px 6px -2px rgba(16,185,129,.35), inset 0 0 0 1px rgba(16,185,129,.25); }
+.news-card.negative .news-comment { border-color:rgba(239,68,68,.5); box-shadow:0 2px 6px -2px rgba(239,68,68,.38), inset 0 0 0 1px rgba(239,68,68,.28); }
+.news-comment strong { color:var(--accent); font-weight:600; letter-spacing:.4px; }
+.news-card.positive .news-comment strong { color:var(--success); }
+.news-card.negative .news-comment strong { color:var(--danger); }
 .news-footer { display:flex; justify-content:space-between; align-items:center; gap:.75rem; margin-top:.25rem; }
 .news-link { color:var(--accent); font-weight:500; text-decoration:none; }
 .news-link:hover { text-decoration:underline; }
 .news-date { color:var(--text-muted); font-size:.7rem; letter-spacing:.5px; text-transform:uppercase; }
+
+/* Extra links & screenshot */
+.extra-links { display:flex; gap:.6rem; flex-wrap:wrap; }
+.extra-links a { font-size:.65rem; text-decoration:none; padding:.35rem .55rem; border-radius:.5rem; background:var(--bg-tertiary); border:1px solid var(--border); color:var(--accent); font-weight:600; letter-spacing:.4px; }
+.extra-links a:hover { background:var(--accent); color:#fff; border-color:var(--accent); }
+.screenshot-preview { margin-top:.5rem; border:1px solid var(--border); border-radius:.6rem; overflow:hidden; background:var(--bg-tertiary); position:relative; }
+.screenshot-preview img { display:block; width:100%; height:auto; max-height:260px; object-fit:contain; background:#000; }
+.screenshot-preview.load-error { display:none; }
 
 @media (max-width: 768px) {
   .report-header {

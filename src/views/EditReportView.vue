@@ -64,6 +64,18 @@
               </div>
               <div class="form-row">
                 <div class="form-group">
+                  <label class="form-label">Ссылка на страницу токена</label>
+                  <input v-model="news.tokenUrl" type="url" class="form-input" :disabled="loading" placeholder="https://www.bybit.com/... или https://www.coingecko.com/..." />
+                  <p class="form-hint">Опционально: Bybit / CoinGecko / DexScreener / TradingView — для быстрого перехода к информации по активу.</p>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Ссылка на скрин</label>
+                  <input v-model="news.screenshotUrl" type="url" class="form-input" :disabled="loading" placeholder="https://i.imgur.com/xxxx.png или https://files.catbox.moe/..." />
+                  <p class="form-hint">Можно любую ссылку. Прямая на файл (.png/.jpg/.webp) — появится мини-превью. Если это просто страница — ссылка сохранится, но без мини-картинки. Для гарантии превью: прямые CDN или catbox.moe (https://catbox.moe/).</p>
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
                   <label class="form-label">Время появления *</label>
                   <input v-model="news.dateLocal" type="datetime-local" class="form-input" required :disabled="loading" />
                   <p class="form-hint">Сохраняется UTC, показывается локально</p>
@@ -81,7 +93,7 @@
                   <label class="form-label">Без софта не взять?</label>
                   <div class="pm-toggle">
                     <button type="button" :class="['pm-btn', news.needsSoftware === true && 'active']" @click="news.needsSoftware = true" :disabled="loading">Да</button>
-                    <button type="button" :class="['pm-btn', news.needsSoftware === false && 'active']" @click="news.needsSoftware = false" :disabled="loading">Нет</button>
+                    <button type="button" :class="['pm-btn', news.needsSoftware === false && 'active']" @click="news.needsSoftware = false" :disabled="loading">Можно</button>
                     <button type="button" :class="['pm-btn', news.needsSoftware == null && 'active']" @click="news.needsSoftware = undefined" :disabled="loading" title="Сброс">—</button>
                   </div>
                   <p class="form-hint">Требуются специальные инструменты/софт</p>
@@ -158,7 +170,7 @@ function toLocalInputValue(d: Date): string {
 function generateId(): string { return Date.now().toString(36) + Math.random().toString(36).slice(2) }
 
 function addNews() {
-  newsItems.value.push({ id: generateId(), title:'', text:'', url:'', tokenName:'', comment:'', impact:0, date:new Date(), priceMoved: undefined, needsSoftware: undefined, dateLocal: toLocalInputValue(new Date()) })
+  newsItems.value.push({ id: generateId(), title:'', text:'', url:'', tokenName:'', tokenUrl:'', screenshotUrl:'', comment:'', impact:0, date:new Date(), priceMoved: undefined, needsSoftware: undefined, dateLocal: toLocalInputValue(new Date()) })
 }
 function removeNews(i:number){ newsItems.value.splice(i,1) }
 
@@ -198,6 +210,8 @@ async function handleSubmit() {
         text: n.text.trim(),
         url: n.url.trim(),
         tokenName: n.tokenName.trim().toUpperCase(),
+        tokenUrl: n.tokenUrl?.trim() || undefined,
+        screenshotUrl: n.screenshotUrl?.trim() || undefined,
         comment: n.comment.trim(),
         impact: n.impact,
         date: new Date(n.dateLocal),

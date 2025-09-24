@@ -515,6 +515,10 @@ onMounted(() => {
 .news-title { font-size:.7rem; line-height:1.25; max-width:520px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; position:relative; z-index:0; color:var(--text-primary); }
 .token-tag { background:var(--bg-tertiary); border:1px solid var(--border); padding:.32rem .62rem; border-radius:.7rem; font-size:.6rem; font-weight:600; letter-spacing:.55px; display:inline-flex; align-items:center; gap:.28rem; position:relative; z-index:1; line-height:1; color:var(--text-primary); }
 .token-tag:before { content:'#'; opacity:.5; }
+.token-tag { background:linear-gradient(135deg,var(--bg-tertiary) 0%, var(--bg-secondary) 55%, var(--bg-tertiary) 100%); border:1px solid var(--border); padding:.42rem .7rem; border-radius:.75rem; font-size:.65rem; font-weight:700; letter-spacing:.7px; display:inline-flex; align-items:center; gap:.3rem; position:relative; z-index:1; line-height:1; color:var(--text-primary); box-shadow:0 2px 6px -2px rgba(0,0,0,.55), 0 0 0 1px rgba(255,255,255,0.06); text-transform:uppercase; }
+.token-tag:before { content:'#'; opacity:.45; font-weight:500; }
+tr.row-pos .token-tag { background:linear-gradient(135deg,var(--success) 0%, rgba(16,185,129,0.85) 60%, var(--success) 100%); color:#fff; border-color:rgba(16,185,129,.55); box-shadow:0 2px 8px -2px rgba(16,185,129,.55), 0 0 0 1px rgba(16,185,129,.45); }
+tr.row-neg .token-tag { background:linear-gradient(135deg,var(--danger) 0%, rgba(239,68,68,0.85) 60%, var(--danger) 100%); color:#fff; border-color:rgba(239,68,68,.55); box-shadow:0 2px 8px -2px rgba(239,68,68,.55), 0 0 0 1px rgba(239,68,68,.45); }
 .impact-cell { font-weight:600; font-size:.68rem; font-variant-numeric:tabular-nums; color:var(--text-primary); }
 .impact-cell span { display:inline-block; padding:.3rem .6rem; border-radius:.65rem; background:var(--bg-tertiary); box-shadow:inset 0 0 0 1px var(--border); min-width:60px; text-align:center; position:relative; z-index:0; color:var(--text-primary); }
 .impact-pos span { background:rgba(16,185,129,0.12); box-shadow:inset 0 0 0 1px rgba(16,185,129,0.35); color:var(--success); }

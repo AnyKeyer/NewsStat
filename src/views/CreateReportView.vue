@@ -107,6 +107,31 @@
 
               <div class="form-row">
                 <div class="form-group">
+                  <label class="form-label">Ссылка на страницу токена</label>
+                  <input
+                    v-model="news.tokenUrl"
+                    type="url"
+                    class="form-input"
+                    placeholder="https://www.bybit.com/... или https://www.coingecko.com/..."
+                    :disabled="loading"
+                  />
+                  <p class="form-hint">Опционально: страница токена (Bybit, CoinGecko, DexScreener, TradingView). Укажи чтобы быстрее перейти к стакану.</p>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Ссылка на скрин</label>
+                  <input
+                    v-model="news.screenshotUrl"
+                    type="url"
+                    class="form-input"
+                    placeholder="https://i.imgur.com/xxxx.png или https://files.catbox.moe/..."
+                    :disabled="loading"
+                  />
+                  <p class="form-hint">Можно вставить любую ссылку. Если это прямая на файл (.png/.jpg/.webp) — покажем мини-превью. Если обычная страница (без расширения) — всё равно сохранится, просто без мини-картинки. Для надежного превью подойдут прямые CDN или catbox.moe (https://catbox.moe/).</p>
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
                   <label class="form-label">Ссылка на новость *</label>
                   <input
                     v-model="news.url"
@@ -167,7 +192,7 @@
                   <label class="form-label">Без софта не взять?</label>
                   <div class="pm-toggle">
                     <button type="button" :class="['pm-btn', news.needsSoftware === true && 'active']" @click="news.needsSoftware = true" :disabled="loading">Да</button>
-                    <button type="button" :class="['pm-btn', news.needsSoftware === false && 'active']" @click="news.needsSoftware = false" :disabled="loading">Нет</button>
+                    <button type="button" :class="['pm-btn', news.needsSoftware === false && 'active']" @click="news.needsSoftware = false" :disabled="loading">Можно</button>
                     <button type="button" :class="['pm-btn', news.needsSoftware == null && 'active']" @click="news.needsSoftware = undefined" :disabled="loading" title="Сброс">—</button>
                   </div>
                   <p class="form-hint">Отметьте, если реализация требует спец. инструментов/софта</p>
@@ -273,6 +298,8 @@ function addNews(): void {
     text: '',
     url: '',
     tokenName: '',
+    tokenUrl: '',
+    screenshotUrl: '',
     comment: '',
     impact: 0,
     date: now,
@@ -306,6 +333,8 @@ async function handleSubmit(): Promise<void> {
             text: n.text.trim(),
             url: n.url.trim(),
             tokenName: n.tokenName.trim().toUpperCase(),
+            tokenUrl: n.tokenUrl?.trim() || undefined,
+            screenshotUrl: n.screenshotUrl?.trim() || undefined,
             comment: n.comment.trim(),
             impact: n.impact,
             date,
