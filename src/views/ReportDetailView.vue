@@ -70,38 +70,44 @@
         </div>
 
         <div class="news-list">
-          <div 
-            v-for="newsItem in filteredNews" 
-            :key="newsItem.id" 
-            class="news-card"
+          <div
+            v-for="newsItem in filteredNews"
+            :key="newsItem.id"
+            :class="['news-card','card','card-hover','fade-in', impactClass(newsItem)]"
           >
-            <div class="news-header">
-              <h3 class="news-title">{{ newsItem.title }}</h3>
-              <div class="news-impact" :class="{ positive: newsItem.impact > 0, negative: newsItem.impact < 0 }">
-                {{ newsItem.impact > 0 ? '+' : '' }}{{ newsItem.impact.toFixed(2) }}%
+            <div class="news-card-inner">
+              <div class="news-header">
+                <div class="title-block">
+                  <h3 class="news-title">{{ newsItem.title }}</h3>
+                  <div class="token-badges">
+                    <span class="badge accent token-badge" v-if="newsItem.tokenName">{{ newsItem.tokenName }}</span>
+                  </div>
+                </div>
+                <div class="impact-badge" :class="impactClass(newsItem)">
+                  <span v-if="newsItem.impact > 0">▲</span>
+                  <span v-else-if="newsItem.impact < 0">▼</span>
+                  <span v-else>○</span>
+                  {{ formattedImpact(newsItem.impact) }}
+                </div>
               </div>
-            </div>
-            
-            <div class="news-token">
-              <strong>Токен:</strong> {{ newsItem.tokenName }}
-            </div>
-            
-            <div class="news-text">{{ newsItem.text }}</div>
-            
-            <div v-if="newsItem.comment" class="news-comment">
-              <strong>Комментарий:</strong> {{ newsItem.comment }}
-            </div>
-            
-            <div class="news-footer">
-              <a 
-                :href="newsItem.url" 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                class="news-link"
-              >
-                🔗 Источник
-              </a>
-              <span class="news-date">{{ formatDate(newsItem.date) }}</span>
+
+              <div class="news-text">{{ newsItem.text }}</div>
+
+              <div v-if="newsItem.comment" class="news-comment">
+                <strong>Комментарий:</strong> {{ newsItem.comment }}
+              </div>
+
+              <div class="news-footer">
+                <a
+                  :href="newsItem.url"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="news-link"
+                >
+                  🔗 Источник
+                </a>
+                <span class="news-date">{{ formatDate(newsItem.date) }}</span>
+              </div>
             </div>
           </div>
         </div>
@@ -142,6 +148,18 @@ const filteredNews = computed(() => {
       return report.value.news
   }
 })
+
+function impactClass(n: { impact: number }) {
+  if (n.impact > 0) return 'positive'
+  if (n.impact < 0) return 'negative'
+  return 'neutral'
+}
+
+function formattedImpact(v: number) {
+  if (v > 0) return `+${v.toFixed(2)}%`
+  if (v < 0) return `${v.toFixed(2)}%`
+  return '0%'
+}
 
 function formatDate(date: Date): string {
   return new Intl.DateTimeFormat('ru-RU', {
@@ -295,94 +313,27 @@ onUnmounted(() => {
   border-color: var(--danger);
 }
 
-.news-list {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
-.news-card {
-  background: var(--bg-secondary);
-  padding: 1.5rem;
-  border-radius: 0.75rem;
-  box-shadow: 0 2px 4px var(--shadow);
-  border: 1px solid var(--border);
-}
-
-.news-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 1rem;
-  gap: 1rem;
-}
-
-.news-title {
-  color: var(--text-primary);
-  margin: 0;
-  flex: 1;
-}
-
-.news-impact {
-  padding: 0.25rem 0.75rem;
-  border-radius: 9999px;
-  font-weight: bold;
-  font-size: 0.875rem;
-  white-space: nowrap;
-}
-
-.news-impact.positive {
-  background: rgba(16, 185, 129, 0.2);
-  color: var(--success);
-}
-
-.news-impact.negative {
-  background: rgba(239, 68, 68, 0.2);
-  color: var(--danger);
-}
-
-.news-token {
-  color: var(--text-primary);
-  font-weight: 500;
-  margin-bottom: 1rem;
-}
-
-.news-text {
-  color: var(--text-secondary);
-  line-height: 1.6;
-  margin-bottom: 1rem;
-}
-
-.news-comment {
-  color: var(--text-muted);
-  font-style: italic;
-  padding: 0.75rem;
-  background: var(--bg-tertiary);
-  border-radius: 0.5rem;
-  margin-bottom: 1rem;
-}
-
-.news-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 1rem;
-}
-
-.news-link {
-  color: var(--accent);
-  text-decoration: none;
-  font-weight: 500;
-}
-
-.news-link:hover {
-  text-decoration: underline;
-}
-
-.news-date {
-  color: var(--text-muted);
-  font-size: 0.875rem;
-}
+.news-list { display:flex; flex-direction:column; gap:1rem; }
+.news-card { position:relative; padding:1.15rem 1.15rem 1.1rem; border-left:4px solid transparent; }
+.news-card.positive { border-left-color: var(--success); }
+.news-card.negative { border-left-color: var(--danger); }
+.news-card.neutral { border-left-color: var(--border); }
+.news-card .news-card-inner { display:flex; flex-direction:column; gap:.75rem; }
+.news-header { display:flex; justify-content:space-between; gap:1rem; align-items:flex-start; }
+.title-block { flex:1; min-width:0; }
+.news-title { margin:0 0 .25rem; font-size:1rem; line-height:1.3; color:var(--text-primary); }
+.token-badges { display:flex; gap:.4rem; flex-wrap:wrap; }
+.token-badge { font-size:.65rem; letter-spacing:.5px; }
+.impact-badge { display:flex; align-items:center; gap:.35rem; font-size:.8rem; font-weight:600; padding:.45rem .7rem; border-radius:999px; background:var(--bg-tertiary); box-shadow:inset 0 0 0 1px var(--border); }
+.impact-badge.positive { color:var(--success); box-shadow:inset 0 0 0 1px rgba(16,185,129,.4); }
+.impact-badge.negative { color:var(--danger); box-shadow:inset 0 0 0 1px rgba(239,68,68,.4); }
+.impact-badge.neutral { color:var(--text-secondary); }
+.news-text { color:var(--text-secondary); line-height:1.55; white-space:pre-line; }
+.news-comment { color:var(--text-muted); font-size:.8rem; background:var(--bg-tertiary); border:1px solid var(--border); padding:.65rem .75rem; border-radius:.6rem; }
+.news-footer { display:flex; justify-content:space-between; align-items:center; gap:.75rem; margin-top:.25rem; }
+.news-link { color:var(--accent); font-weight:500; text-decoration:none; }
+.news-link:hover { text-decoration:underline; }
+.news-date { color:var(--text-muted); font-size:.7rem; letter-spacing:.5px; text-transform:uppercase; }
 
 @media (max-width: 768px) {
   .report-header {
