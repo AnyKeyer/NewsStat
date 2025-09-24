@@ -96,6 +96,86 @@
             </table>
           </div>
         </div>
+
+        <!-- Фильтрация новостей -->
+        <div class="news-filter-section card glass fade-in" v-if="allNews.length">
+          <h2>Новости (фильтр)</h2>
+          <div class="news-filters">
+            <div class="field">
+              <label>Направление</label>
+              <select v-model="newsDirection">
+                <option value="all">Все</option>
+                <option value="positive">Позитив</option>
+                <option value="negative">Негатив</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Сортировка</label>
+              <select v-model="newsSort">
+                <option value="abs">По абсолютному влиянию</option>
+                <option value="growth">По росту (max→)</option>
+                <option value="decline">По падению (min→)</option>
+                <option value="newest">Новые</option>
+                <option value="oldest">Старые</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Мин |impact|: {{ minAbsImpact }}</label>
+              <input type="range" min="0" max="30" step="0.5" v-model.number="minAbsImpact" />
+            </div>
+            <div class="field">
+              <label>Поиск (токен/заголовок)</label>
+              <input type="text" v-model="newsSearch" placeholder="BTC, 'ETF'..." />
+            </div>
+            <div class="field">
+              <label>Top N</label>
+              <select v-model.number="newsTopN">
+                <option :value="10">10</option>
+                <option :value="25">25</option>
+                <option :value="50">50</option>
+                <option :value="100">100</option>
+              </select>
+            </div>
+            <div class="field" style="flex:1; align-self:stretch; display:flex; align-items:flex-end;">
+              <div style="font-size:.65rem; color:var(--text-secondary); line-height:1.1;">
+                Показано: {{ filteredNews.length }} / {{ allNews.length }}
+              </div>
+            </div>
+          </div>
+          <div class="news-table-wrapper">
+            <table class="news-table">
+              <thead>
+                <tr>
+                  <th style="width:70px;">Токен</th>
+                  <th style="width:80px;">Импакт</th>
+                  <th>Заголовок</th>
+                  <th style="width:110px;">Время</th>
+                  <th style="width:140px;">Отчет</th>
+                </tr>
+              </thead>
+              <tbody v-if="filteredNews.length">
+                <tr v-for="n in filteredNews" :key="n.id + n.reportId" :class="{ 'row-pos': n.impact>0, 'row-neg': n.impact<0 }">
+                  <td><span class="token-tag">{{ n.tokenName || '—' }}</span></td>
+                  <td class="impact-cell" :class="{ 'impact-pos': n.impact>0, 'impact-neg': n.impact<0 }">
+                    <span v-if="n.impact>0">+{{ n.impact.toFixed(2) }}%</span>
+                    <span v-else-if="n.impact<0">{{ n.impact.toFixed(2) }}%</span>
+                    <span v-else>0%</span>
+                  </td>
+                  <td>
+                    <div class="news-title">{{ n.title }}</div>
+                  </td>
+                  <td>{{ formatNewsDate(n.date) }}</td>
+                  <td>
+                    <router-link class="report-link" :to="{ name: 'ReportDetail', params: { id: n.reportId } }">Открыть ↗</router-link>
+                  </td>
+                </tr>
+              </tbody>
+              <tbody v-else>
+                <tr><td colspan="5" class="no-results">Ничего не найдено под условия</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -119,12 +199,40 @@ interface DailyAggregate {
   positivePercent: number
   negativePercent: number
 }
+interface FlatNewsItem { id:string; reportId:string; reportTitle:string; tokenName:string; impact:number; date:Date; title:string }
 
 const reportStore = useReportStore()
 const loadingAll = ref(false)
 const error = ref<string | null>(null)
 const fullReportsCache = ref<Map<string, any>>(new Map())
 const dailyAggregates = ref<DailyAggregate[]>([])
+const allNews = ref<FlatNewsItem[]>([])
+// Фильтры новостей
+const newsDirection = ref<'all' | 'positive' | 'negative'>('all')
+const newsSort = ref<'abs' | 'growth' | 'decline' | 'newest' | 'oldest'>('abs')
+const minAbsImpact = ref(0)
+const newsSearch = ref('')
+const newsTopN = ref(50)
+const filteredNews = computed(() => {
+  let list = allNews.value
+  if (newsDirection.value === 'positive') list = list.filter(n => n.impact>0)
+  else if (newsDirection.value === 'negative') list = list.filter(n => n.impact<0)
+  if (minAbsImpact.value>0) list = list.filter(n => Math.abs(n.impact) >= minAbsImpact.value)
+  if (newsSearch.value.trim()) {
+    const q = newsSearch.value.trim().toLowerCase()
+    list = list.filter(n => n.tokenName.toLowerCase().includes(q) || n.title.toLowerCase().includes(q))
+  }
+  list = [...list]
+  switch (newsSort.value) {
+    case 'abs': list.sort((a,b)=> Math.abs(b.impact) - Math.abs(a.impact)); break
+    case 'growth': list.sort((a,b)=> b.impact - a.impact); break
+    case 'decline': list.sort((a,b)=> a.impact - b.impact); break
+    case 'newest': list.sort((a,b)=> b.date.getTime() - a.date.getTime()); break
+    case 'oldest': list.sort((a,b)=> a.date.getTime() - b.date.getTime()); break
+  }
+  return list.slice(0, newsTopN.value)
+})
+function formatNewsDate(d: Date){ return new Intl.DateTimeFormat('ru-RU',{ day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'}).format(d) }
 
 const totalReports = computed(() => reportStore.reports.length)
 const totalNews = computed(() => dailyAggregates.value.reduce((sum, d) => sum + d.totalNews, 0))
@@ -193,7 +301,8 @@ async function loadAll() {
     await Promise.all(workers)
 
     // Агрегация
-    const dayMap = new Map<string, DailyAggregate>()
+  const dayMap = new Map<string, DailyAggregate>()
+  const flat: FlatNewsItem[] = []
     for (const report of fullReportsCache.value.values()) {
       const dateKey = formatDateKey(report.createdAt)
       if (!dayMap.has(dateKey)) {
@@ -216,6 +325,7 @@ async function loadAll() {
       for (const n of report.news) {
         if (n.impact > 0) agg.positiveNews += 1
         else if (n.impact < 0) agg.negativeNews += 1
+        flat.push({ id: n.id, reportId: report.id, reportTitle: report.title, tokenName: (n.tokenName||'').toUpperCase(), impact: n.impact, date: new Date(n.date), title: n.title })
       }
     }
 
@@ -238,7 +348,8 @@ async function loadAll() {
       agg.negativePercent = agg.totalNews ? (agg.negativeNews / agg.totalNews) * 100 : 0
     }
 
-    dailyAggregates.value = Array.from(dayMap.values()).sort((a,b)=> b.dateKey.localeCompare(a.dateKey))
+  dailyAggregates.value = Array.from(dayMap.values()).sort((a,b)=> b.dateKey.localeCompare(a.dateKey))
+  allNews.value = flat
 
     // Мета-теги
     metaService.updatePageMeta({
