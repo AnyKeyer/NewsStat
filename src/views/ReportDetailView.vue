@@ -63,32 +63,32 @@
         <div class="news-filters">
           <button 
             @click="newsFilter = 'all'"
-            :class="['filter-btn', { active: newsFilter === 'all' }]"
+            :class="['btn','btn-sm', newsFilter === 'all' ? 'btn-gradient' : 'btn-outline']"
           >
             Все ({{ report.news.length }})
           </button>
           <button 
             @click="newsFilter = 'moved'"
-            :class="['filter-btn', 'moved', { active: newsFilter === 'moved' }]"
+            :class="['btn','btn-sm', newsFilter === 'moved' ? 'btn-success' : 'btn-outline']"
           >
             Сдвиг ({{ report.news.filter(n => n.priceMoved === true).length }})
           </button>
           <button 
             @click="newsFilter = 'static'"
-            :class="['filter-btn', 'static', { active: newsFilter === 'static' }]"
+            :class="['btn','btn-sm', newsFilter === 'static' ? 'btn-secondary' : 'btn-outline']"
           >
             Без сдвига ({{ report.news.filter(n => n.priceMoved === false).length }})
           </button>
           <button 
             @click="newsFilter = 'unmarked'"
-            :class="['filter-btn', 'unmarked', { active: newsFilter === 'unmarked' }]"
+            :class="['btn','btn-sm', newsFilter === 'unmarked' ? 'btn-warning' : 'btn-outline']"
             v-if="report.news.some(n => n.priceMoved === undefined)"
           >
             ? ({{ report.news.filter(n => n.priceMoved === undefined).length }})
           </button>
           <button
             @click="newsFilter = 'software'"
-            :class="['filter-btn', 'software', { active: newsFilter === 'software' }]"
+            :class="['btn','btn-sm', newsFilter === 'software' ? 'btn-primary' : 'btn-outline']"
           >
             Софт ({{ report.news.filter(n => n.needsSoftware === true).length }})
           </button>
@@ -374,49 +374,7 @@ onUnmounted(() => {
   margin-bottom: 1.5rem;
 }
 
-.news-filters {
-  display: flex;
-  gap: 0.5rem;
-  margin-bottom: 2rem;
-  flex-wrap: wrap;
-}
-
-.filter-btn {
-  padding: 0.5rem 1rem;
-  border: 2px solid var(--border);
-  background: var(--bg-secondary);
-  color: var(--text-primary);
-  border-radius: 0.5rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  font-weight: 500;
-}
-
-.filter-btn:hover {
-  border-color: var(--accent);
-}
-
-.filter-btn.active {
-  background: var(--accent);
-  color: white;
-  border-color: var(--accent);
-}
-
-.filter-btn.positive.active {
-  background: var(--success);
-  border-color: var(--success);
-}
-
-.filter-btn.negative.active {
-  background: var(--danger);
-  border-color: var(--danger);
-}
-
-/* Movement filter specific colors */
-.filter-btn.moved.active { background: var(--success); border-color: var(--success); }
-.filter-btn.static.active { background: var(--bg-tertiary); border-color: var(--border); color: var(--text-primary); }
-.filter-btn.unmarked.active { background: var(--warning, #eab308); border-color: var(--warning, #eab308); color: #000; }
-.filter-btn.software.active { background: var(--accent); border-color: var(--accent); }
+.news-filters { display:flex; gap:.5rem; margin-bottom:2rem; flex-wrap:wrap; }
 
 .news-list { display:flex; flex-direction:column; gap:1rem; }
 .news-card { position:relative; padding:1.15rem 1.15rem 1.1rem; border-left:4px solid transparent; }
@@ -468,14 +426,14 @@ onUnmounted(() => {
 .news-text { color:var(--text-secondary); line-height:1.55; white-space:pre-line; }
 .news-comment { 
   position:relative;
-  color:var(--text-primary);
-  font-size:.75rem;
-  line-height:1.35;
-  background:linear-gradient(145deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.02) 65%, rgba(255,255,255,0.05) 100%), var(--bg-tertiary);
+  color:var(--text-secondary);
+  font-size:.9rem;
+  line-height:1.5;
+  background:linear-gradient(145deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 65%, rgba(255,255,255,0.07) 100%), var(--bg-tertiary);
   border:1px solid var(--border);
-  padding:.7rem .85rem .75rem;
-  border-radius:.75rem;
-  box-shadow:0 2px 4px -2px rgba(0,0,0,.4), inset 0 0 0 1px rgba(255,255,255,0.04);
+  padding:.8rem .95rem .85rem;
+  border-radius:.85rem;
+  box-shadow:0 3px 6px -2px rgba(0,0,0,.45), inset 0 0 0 1px rgba(255,255,255,0.05);
   overflow:hidden;
 }
 .news-card.positive .news-comment { border-color:rgba(16,185,129,.45); box-shadow:0 2px 6px -2px rgba(16,185,129,.35), inset 0 0 0 1px rgba(16,185,129,.25); }

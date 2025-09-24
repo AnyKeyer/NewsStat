@@ -60,8 +60,9 @@
               <button
                 type="button"
                 @click="removeNews(index)"
-                class="btn-remove"
+                class="btn btn-danger-outline btn-sm btn-icon-only"
                 :disabled="loading"
+                title="Удалить новость"
               >
                 ❌
               </button>
@@ -126,7 +127,7 @@
                     placeholder="https://i.imgur.com/xxxx.png или https://files.catbox.moe/..."
                     :disabled="loading"
                   />
-                  <p class="form-hint">Можно вставить любую ссылку. Если это прямая на файл (.png/.jpg/.webp) — покажем мини-превью. Если обычная страница (без расширения) — всё равно сохранится, просто без мини-картинки. Для надежного превью подойдут прямые CDN или catbox.moe (https://catbox.moe/).</p>
+                  <p class="form-hint">Можно вставить любую ссылку. Если это прямая на файл (.png/.jpg/.webp) — покажем мини-превью. Если обычная страница (без расширения) — всё равно сохранится, просто без мини-картинки. Для надежного превью подойдут прямые CDN или <a href="https://catbox.moe/" target="_blank" rel="noopener">catbox.moe</a>.</p>
                 </div>
               </div>
 
@@ -182,18 +183,18 @@
                 <div class="form-group">
                   <label class="form-label">Цена сдвинулась?</label>
                   <div class="pm-toggle">
-                    <button type="button" :class="['pm-btn', news.priceMoved === true && 'active']" @click="news.priceMoved = true" :disabled="loading">Да</button>
-                    <button type="button" :class="['pm-btn', news.priceMoved === false && 'active']" @click="news.priceMoved = false" :disabled="loading">Нет</button>
-                    <button type="button" :class="['pm-btn', news.priceMoved == null && 'active']" @click="news.priceMoved = undefined" :disabled="loading" title="Сброс">—</button>
+                    <button type="button" class="btn btn-outline btn-sm" :class="{ 'btn-success': news.priceMoved === true }" @click="news.priceMoved = true" :disabled="loading">Да</button>
+                    <button type="button" class="btn btn-outline btn-sm" :class="{ 'btn-danger': news.priceMoved === false }" @click="news.priceMoved = false" :disabled="loading">Нет</button>
+                    <button type="button" class="btn btn-outline btn-sm" :class="{ 'btn-gradient': news.priceMoved == null }" @click="news.priceMoved = undefined" :disabled="loading" title="Сброс">—</button>
                   </div>
                   <p class="form-hint">Отметьте, если после новости цена реально дернулась в прогнозируемом направлении</p>
                 </div>
                 <div class="form-group">
                   <label class="form-label">Без софта не взять?</label>
                   <div class="pm-toggle">
-                    <button type="button" :class="['pm-btn', news.needsSoftware === true && 'active']" @click="news.needsSoftware = true" :disabled="loading">Да</button>
-                    <button type="button" :class="['pm-btn', news.needsSoftware === false && 'active']" @click="news.needsSoftware = false" :disabled="loading">Можно</button>
-                    <button type="button" :class="['pm-btn', news.needsSoftware == null && 'active']" @click="news.needsSoftware = undefined" :disabled="loading" title="Сброс">—</button>
+                    <button type="button" class="btn btn-outline btn-sm" :class="{ 'btn-success': news.needsSoftware === true }" @click="news.needsSoftware = true" :disabled="loading">Да</button>
+                    <button type="button" class="btn btn-outline btn-sm" :class="{ 'btn-primary': news.needsSoftware === false }" @click="news.needsSoftware = false" :disabled="loading">Можно</button>
+                    <button type="button" class="btn btn-outline btn-sm" :class="{ 'btn-gradient': news.needsSoftware == null }" @click="news.needsSoftware = undefined" :disabled="loading" title="Сброс">—</button>
                   </div>
                   <p class="form-hint">Отметьте, если реализация требует спец. инструментов/софта</p>
                 </div>
@@ -456,23 +457,6 @@ function toLocalInputValue(d: Date): string {
   margin: 0;
 }
 
-.btn-remove {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0.5rem;
-  border-radius: 0.375rem;
-  transition: background-color 0.2s ease;
-}
-
-.btn-remove:hover {
-  background: rgba(239, 68, 68, 0.2);
-}
-
-.btn-remove:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
 
 .news-form {
   display: flex;
@@ -620,9 +604,5 @@ function toLocalInputValue(d: Date): string {
   }
 }
 
-.pm-toggle { display:flex; gap:.4rem; }
-.pm-btn { flex:1; background:var(--bg-tertiary); border:1px solid var(--border); padding:.55rem .6rem; font-size:.7rem; font-weight:600; letter-spacing:.4px; cursor:pointer; border-radius:.55rem; color:var(--text-secondary); transition:.18s background, .18s color, .18s border-color, .18s box-shadow; }
-.pm-btn:hover:not(:disabled) { background:rgba(255,255,255,0.08); color:var(--text-primary); }
-.pm-btn.active { background:var(--accent); color:#fff; border-color:var(--accent); box-shadow:0 0 0 1px var(--accent), 0 4px 12px -4px rgba(0,0,0,.5); }
-.pm-btn:disabled { opacity:.5; cursor:not-allowed; }
+.pm-toggle { display:flex; gap:.45rem; }
 </style>

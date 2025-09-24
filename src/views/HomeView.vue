@@ -51,34 +51,68 @@
       >
         <h2 class="date-header">{{ dateGroup.displayDate }}</h2>
         <div class="reports-list">
-          <div 
-            v-for="report in dateGroup.reports" 
-            :key="report.id" 
-            class="report-card card card-hover fade-in"
+          <div
+            v-for="report in dateGroup.reports"
+            :key="report.id"
+            class="report-card enhanced fade-in"
             @click="navigateToReport(report.id)"
+            :data-empty="!statsMap[report.id] || statsMap[report.id].totalNews === 0"
           >
-            <div class="report-content">
-              <div class="report-header">
-                <div class="report-title-block">
-                  <h3>{{ report.title }}</h3>
-                  <span class="report-time">{{ formatTime(report.createdAt) }}</span>
+            <div class="rc-body">
+              <div class="rc-top">
+                <div class="rc-title-block">
+                  <h3 class="rc-title">{{ report.title }}</h3>
+                  <span class="rc-time" :title="report.createdAt.toLocaleString()">{{ formatTime(report.createdAt) }}</span>
                 </div>
-                <div class="mini-stats" v-if="statsMap[report.id]">
-                  <span class="badge accent" v-if="statsMap[report.id].totalNews">{{ statsMap[report.id].totalNews }} шт</span>
-                  <span class="badge success" v-if="statsMap[report.id].movedCount">Δ {{ statsMap[report.id].movedCount }}/{{ statsMap[report.id].totalNews }} ({{ statsMap[report.id].movedPercent.toFixed(0) }}%)</span>
-                  <span class="badge muted" v-if="statsMap[report.id].unmarkedCount">? {{ statsMap[report.id].unmarkedCount }}</span>
+                <div v-if="statsMap[report.id] && statsMap[report.id].totalNews" class="rc-delta" :title="'Доля новостей со сдвигом цены'">
+                  Δ {{ statsMap[report.id].movedPercent.toFixed(0) }}%
                 </div>
               </div>
-              <!-- Сентимент прогресс можно скрыть или оставить при необходимости; пока скрываем -->
+
+              <div v-if="cardStats(report.id)" class="rc-kpis">
+                <div class="kpi total" :title="'Всего новостей'">
+                  <div class="kv">{{ cardStats(report.id)!.total }}</div>
+                  <div class="kl">всего</div>
+                </div>
+                <div class="kpi moved" :class="{faded: !cardStats(report.id)!.moved}" :title="'Сдвиг (кол-во / % от всех)'">
+                  <div class="kv">{{ cardStats(report.id)!.moved }}</div>
+                  <div class="ksub" v-if="cardStats(report.id)!.moved">{{ cardStats(report.id)!.movedPercent }}%</div>
+                  <div class="kl">Δ</div>
+                </div>
+                <div class="kpi static" :class="{faded: !cardStats(report.id)!.static}" :title="'Без сдвига'">
+                  <div class="kv">{{ cardStats(report.id)!.static }}</div>
+                  <div class="kl">без</div>
+                </div>
+                <div class="kpi unmarked" v-if="cardStats(report.id)!.unmarked" :title="'Не отмечено движений'">
+                  <div class="kv">{{ cardStats(report.id)!.unmarked }}</div>
+                  <div class="kl">?</div>
+                </div>
+                <div class="kpi growth" v-if="cardStats(report.id)!.avgGrowth" :title="'Средний % роста по позитивным'">
+                  <div class="kv plus">+{{ cardStats(report.id)!.avgGrowth }}</div>
+                  <div class="kl">рост</div>
+                </div>
+                <div class="kpi decline" v-if="cardStats(report.id)!.avgDecline" :title="'Средний % падения по негативным'">
+                  <div class="kv minus">-{{ cardStats(report.id)!.avgDecline }}</div>
+                  <div class="kl">падение</div>
+                </div>
+              </div>
+
+              <div v-if="cardStats(report.id) && cardStats(report.id)!.total" class="rc-progress" aria-hidden="true">
+                <div class="bar">
+                  <div class="seg moved" :style="{ width: cardStats(report.id)!.movedBar + '%' }"></div>
+                  <div class="seg static" :style="{ width: cardStats(report.id)!.staticBar + '%' }"></div>
+                  <div class="seg unmarked" v-if="cardStats(report.id)!.unmarkedBar > 0" :style="{ width: cardStats(report.id)!.unmarkedBar + '%' }"></div>
+                </div>
+              </div>
+
+              <!-- Hover overlay removed per request -->
             </div>
-            <div class="report-actions" v-if="canDeleteReports">
-              <button 
+            <div class="rc-actions" v-if="canDeleteReports">
+              <button
                 @click.stop="deleteReport(report.id)"
-                class="btn-delete"
+                class="btn btn-danger-outline btn-sm btn-icon-only"
                 title="Удалить отчет"
-              >
-                🗑️
-              </button>
+              >🗑️</button>
             </div>
           </div>
         </div>
@@ -217,6 +251,50 @@ function formatTime(date: Date): string {
 
 function getReportStats(reportId: string): ReportStatistics | null {
   return reportStatsCache.value.get(reportId) || null
+}
+
+interface CardStats {
+  total: number
+  moved: number
+  static: number
+  unmarked: number
+  movedPercent: number
+  staticPercent: number
+  unmarkedPercent: number
+  avgGrowth: string | null
+  avgDecline: string | null
+  movedBar: number
+  staticBar: number
+  unmarkedBar: number
+}
+
+function cardStats(id: string): CardStats | null {
+  const s = getReportStats(id)
+  if (!s) return null
+  const total = s.totalNews || 0
+  if (!total) return { total:0, moved:0, static:0, unmarked:0, movedPercent:0, staticPercent:0, unmarkedPercent:0, avgGrowth:null, avgDecline:null, movedBar:0, staticBar:0, unmarkedBar:0 }
+  const movedPercent = Math.round(s.movedPercent)
+  const staticPercent = Math.round((s.staticCount / total) * 100)
+  const unmarkedPercent = Math.round((s.unmarkedCount / total) * 100)
+  const movedBar = s.movedPercent
+  const staticBar = (s.staticCount / total) * 100
+  const unmarkedBar = (s.unmarkedCount / total) * 100
+  const avgGrowth = s.positiveNewsCount ? (s.averageGrowth).toFixed(1) : null
+  const avgDecline = s.negativeNewsCount ? Math.abs(s.averageDecline).toFixed(1) : null
+  return {
+    total: total,
+    moved: s.movedCount,
+    static: s.staticCount,
+    unmarked: s.unmarkedCount,
+    movedPercent,
+    staticPercent,
+    unmarkedPercent,
+    avgGrowth,
+    avgDecline,
+    movedBar: Number(movedBar.toFixed(2)),
+    staticBar: Number(staticBar.toFixed(2)),
+    unmarkedBar: Number(unmarkedBar.toFixed(2)),
+  }
 }
 
 function positivePercent(reportId: string): number {
@@ -386,52 +464,49 @@ onActivated(() => {
   gap: 0.75rem;
 }
 
-.report-card { display:flex; justify-content:space-between; align-items:stretch; gap:1rem; cursor:pointer; }
+/* Enhanced report card */
+.report-card.enhanced { position:relative; display:flex; align-items:stretch; gap:.75rem; cursor:pointer; background:linear-gradient(145deg,var(--bg-secondary) 0%,var(--bg-tertiary) 120%); border:1px solid var(--border); border-radius:1rem; padding:1rem 1.15rem 1rem; overflow:hidden; transition:var(--transition-base, .28s ease); }
+.report-card.enhanced:before { content:""; position:absolute; inset:0; background:linear-gradient(135deg, rgba(255,255,255,0.04), rgba(255,255,255,0)); pointer-events:none; }
+.report-card.enhanced:hover { transform:translateY(-3px); box-shadow:0 10px 32px -6px rgba(0,0,0,.55); border-color:var(--accent); }
+.report-card.enhanced[data-empty="true"] { opacity:.55; }
+.report-card.enhanced[data-empty="true"]:hover { opacity:.7; }
 
-.report-content {
-  flex: 1;
-}
+.rc-body { flex:1; display:flex; flex-direction:column; gap:.55rem; position:relative; }
+.rc-top { display:flex; justify-content:space-between; gap:.85rem; align-items:flex-start; }
+.rc-title-block { display:flex; flex-direction:column; min-width:0; }
+.rc-title { margin:0; font-size:1.02rem; font-weight:600; letter-spacing:.35px; color:var(--text-primary); line-height:1.15; max-width:56ch; overflow:hidden; text-overflow:ellipsis; }
+.rc-time { font-size:.7rem; text-transform:uppercase; letter-spacing:1px; color:var(--text-muted); font-weight:600; }
+.rc-delta { background:rgba(16,185,129,0.12); color:var(--success); border:1px solid rgba(16,185,129,0.35); font-size:.65rem; padding:.4rem .55rem; border-radius:.75rem; font-weight:700; display:flex; align-items:center; letter-spacing:.6px; }
 
-.report-header { display:flex; justify-content:space-between; align-items:flex-start; gap:1rem; margin-bottom:.65rem; }
-.report-header h3 { color:var(--text-primary); margin:0 0 .25rem; font-size:1.05rem; font-weight:600; letter-spacing:.3px; }
-.report-title-block { display:flex; flex-direction:column; }
-.mini-stats { display:flex; gap:.35rem; flex-wrap:wrap; }
-.report-progress { margin-top:.25rem; }
-.progress-bar.mini { height:6px; background:var(--bg-tertiary); border-radius:4px; display:flex; overflow:hidden; border:1px solid var(--border); }
-.progress-bar.mini .seg { height:100%; transition:width .6s ease; }
-.progress-bar.mini .seg.pos { background: linear-gradient(90deg, rgba(16,185,129,0.9), rgba(16,185,129,0.45)); }
-.progress-bar.mini .seg.neg { background: linear-gradient(90deg, rgba(239,68,68,0.85), rgba(239,68,68,0.45)); }
+.rc-kpis { display:grid; grid-auto-flow:column; grid-auto-columns:minmax(54px,auto); gap:.55rem; align-items:stretch; overflow-x:auto; padding-bottom:.1rem; }
+.rc-kpis::-webkit-scrollbar { height:6px; }
+.rc-kpis::-webkit-scrollbar-thumb { background: var(--bg-tertiary); border-radius:4px; }
+.rc-kpis .kpi { position:relative; background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:.7rem; padding:.45rem .5rem .5rem; display:flex; flex-direction:column; gap:.15rem; min-width:54px; }
+.rc-kpis .kpi:before { content:""; position:absolute; inset:0; background:linear-gradient(160deg, rgba(255,255,255,0.05), rgba(255,255,255,0)); pointer-events:none; border-radius:inherit; }
+.rc-kpis .kv { font-size:.95rem; font-weight:600; line-height:1; color:var(--text-primary); display:flex; align-items:flex-end; gap:.25rem; }
+.rc-kpis .kv.plus { color:var(--success); }
+.rc-kpis .kv.minus { color:var(--danger); }
+.rc-kpis .ksub { font-size:.55rem; font-weight:600; letter-spacing:.8px; text-transform:uppercase; color:var(--success); line-height:1; }
+.rc-kpis .kl { font-size:.55rem; letter-spacing:.9px; text-transform:uppercase; font-weight:600; color:var(--text-secondary); line-height:1; }
+.rc-kpis .kpi.faded { opacity:.4; }
+.rc-kpis .kpi.total { background:rgba(59,130,246,0.06); border-color:rgba(59,130,246,0.4); }
+.rc-kpis .kpi.moved { background:rgba(16,185,129,0.08); border-color:rgba(16,185,129,0.4); }
+.rc-kpis .kpi.static { background:rgba(100,116,139,0.08); border-color:rgba(100,116,139,0.35); }
+.rc-kpis .kpi.unmarked { background:rgba(234,179,8,0.07); border-color:rgba(234,179,8,0.45); }
+.rc-kpis .kpi.growth { background:rgba(16,185,129,0.05); border-color:rgba(16,185,129,0.35); }
+.rc-kpis .kpi.decline { background:rgba(239,68,68,0.06); border-color:rgba(239,68,68,0.4); }
 
-.report-time {
-  color: var(--text-muted);
-  font-size: 0.875rem;
-}
+.rc-progress { margin-top:.2rem; }
+.rc-progress .bar { position:relative; height:7px; width:100%; border:1px solid var(--border); background:var(--bg-tertiary); border-radius:6px; display:flex; overflow:hidden; }
+.rc-progress .seg { height:100%; transition:width .55s cubic-bezier(.55,.1,.3,1); }
+.rc-progress .seg.moved { background:linear-gradient(90deg, rgba(16,185,129,0.95), rgba(16,185,129,0.55)); }
+.rc-progress .seg.static { background:linear-gradient(90deg, rgba(107,114,128,0.7), rgba(107,114,128,0.3)); }
+.rc-progress .seg.unmarked { background:linear-gradient(90deg, rgba(234,179,8,0.75), rgba(234,179,8,0.35)); }
 
-.report-stats, .stat-item, .stat-label, .stat-value { display:none; }
+/* Removed rc-hover overlay styles */
 
-.report-actions {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-left: 1rem;
-}
-
-.btn-delete {
-  background: transparent;
-  border: none;
-  font-size: 1.1rem;
-  cursor: pointer;
-  opacity: 0.7;
-  transition: all 0.2s ease;
-  padding: 0.25rem;
-  border-radius: 0.25rem;
-}
-
-.btn-delete:hover {
-  opacity: 1;
-  background: var(--danger);
-  color: white;
-}
+.rc-actions { display:flex; align-items:flex-start; }
+.rc-actions .btn-danger-outline { margin-top:.2rem; }
 
 .empty-state {
   display: flex;

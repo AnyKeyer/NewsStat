@@ -11,8 +11,9 @@
         
         <div class="auth-section">
           <template v-if="authStore.isAuthenticated">
-            <router-link to="/create-report" class="btn btn-success">
-              ➕ Создать отчет
+            <router-link to="/create-report" class="btn btn-gradient" title="Создать новый отчет">
+              <span class="btn-icon" aria-hidden="true">➕</span>
+              <span>Создать отчет</span>
             </router-link>
             <span class="username">{{ authStore.username }}</span>
             <button @click="logout" class="btn btn-secondary">Выйти</button>
@@ -194,6 +195,48 @@ export default {
   display: flex;
   align-items: center;
   gap: 1rem;
+}
+
+/* Enhanced Create Report Button */
+.create-report-btn {
+  --cr-grad: linear-gradient(135deg, var(--accent) 0%, var(--accent-hover) 45%, var(--success) 100%);
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: .55rem;
+  padding: .8rem 1.15rem .8rem .95rem;
+  border-radius: .9rem;
+  font-weight: 600;
+  font-size: .9rem;
+  letter-spacing: .5px;
+  text-decoration: none;
+  background: var(--cr-grad);
+  color: #fff;
+  box-shadow: 0 6px 18px -6px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.06), 0 0 0 5px rgba(59,130,246,0.15);
+  isolation: isolate;
+  transition: transform .3s cubic-bezier(.55,.1,.3,1), box-shadow .35s ease, filter .35s ease;
+  overflow: hidden;
+}
+.create-report-btn:before, .create-report-btn:after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .4s ease;
+}
+.create-report-btn:before { background: linear-gradient(145deg, rgba(255,255,255,0.18), rgba(255,255,255,0)); mix-blend-mode: overlay; }
+.create-report-btn:after { background: radial-gradient(circle at 20% 30%, rgba(255,255,255,0.25), transparent 60%), radial-gradient(circle at 80% 70%, rgba(255,255,255,0.18), transparent 65%); mix-blend-mode: soft-light; }
+.create-report-btn:hover { transform: translateY(-3px); filter: brightness(1.05) saturate(1.1); box-shadow: 0 12px 30px -8px rgba(0,0,0,0.65), 0 0 0 1px rgba(255,255,255,0.1), 0 0 0 6px rgba(59,130,246,0.25); }
+.create-report-btn:hover:before, .create-report-btn:hover:after { opacity: 1; }
+.create-report-btn:active { transform: translateY(1px) scale(.97); filter: brightness(.95); }
+.create-report-btn:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(255,255,255,0.85), 0 0 0 6px var(--accent); }
+.create-report-btn .cr-icon { display:inline-flex; width:1.85rem; height:1.85rem; border-radius:.65rem; background:rgba(255,255,255,0.18); align-items:center; justify-content:center; font-size:1.1rem; font-weight:600; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.25), 0 2px 4px -1px rgba(0,0,0,0.45); backdrop-filter: blur(4px) saturate(140%); }
+.create-report-btn .cr-label { position:relative; top:1px; }
+
+@media (max-width: 640px) {
+  .create-report-btn { font-size:.78rem; padding:.7rem .95rem .7rem .8rem; border-radius:.8rem; }
+  .create-report-btn .cr-icon { width:1.6rem; height:1.6rem; font-size:1rem; }
 }
 
 .stats-link {

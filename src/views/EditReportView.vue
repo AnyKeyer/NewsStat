@@ -31,7 +31,7 @@
           <div v-for="(news, index) in newsItems" :key="news.id" class="news-item">
             <div class="news-item-header">
               <h3>Новость #{{ index+1 }}</h3>
-              <button type="button" class="btn-remove" @click="removeNews(index)" :disabled="loading">❌</button>
+              <button type="button" class="btn btn-danger-outline btn-sm btn-icon-only" @click="removeNews(index)" :disabled="loading" title="Удалить новость">❌</button>
             </div>
             <div class="news-form">
               <div class="form-row">
@@ -71,7 +71,7 @@
                 <div class="form-group">
                   <label class="form-label">Ссылка на скрин</label>
                   <input v-model="news.screenshotUrl" type="url" class="form-input" :disabled="loading" placeholder="https://i.imgur.com/xxxx.png или https://files.catbox.moe/..." />
-                  <p class="form-hint">Можно любую ссылку. Прямая на файл (.png/.jpg/.webp) — появится мини-превью. Если это просто страница — ссылка сохранится, но без мини-картинки. Для гарантии превью: прямые CDN или catbox.moe (https://catbox.moe/).</p>
+                  <p class="form-hint">Можно любую ссылку. Прямая на файл (.png/.jpg/.webp) — появится мини-превью. Если это просто страница — ссылка сохранится, но без мини-картинки. Для гарантии превью: прямые CDN или <a href="https://catbox.moe/" target="_blank" rel="noopener">catbox.moe</a>.</p>
                 </div>
               </div>
               <div class="form-row">
@@ -83,18 +83,18 @@
                 <div class="form-group">
                   <label class="form-label">Цена сдвинулась?</label>
                   <div class="pm-toggle">
-                    <button type="button" :class="['pm-btn', news.priceMoved === true && 'active']" @click="news.priceMoved = true" :disabled="loading">Да</button>
-                    <button type="button" :class="['pm-btn', news.priceMoved === false && 'active']" @click="news.priceMoved = false" :disabled="loading">Нет</button>
-                    <button type="button" :class="['pm-btn', news.priceMoved == null && 'active']" @click="news.priceMoved = undefined" :disabled="loading" title="Сброс">—</button>
+                    <button type="button" class="btn btn-outline btn-sm" :class="{ 'btn-success': news.priceMoved === true }" @click="news.priceMoved = true" :disabled="loading">Да</button>
+                    <button type="button" class="btn btn-outline btn-sm" :class="{ 'btn-danger': news.priceMoved === false }" @click="news.priceMoved = false" :disabled="loading">Нет</button>
+                    <button type="button" class="btn btn-outline btn-sm" :class="{ 'btn-gradient': news.priceMoved == null }" @click="news.priceMoved = undefined" :disabled="loading" title="Сброс">—</button>
                   </div>
                   <p class="form-hint">Отметьте если движение цены подтвердилось</p>
                 </div>
                 <div class="form-group">
                   <label class="form-label">Без софта не взять?</label>
                   <div class="pm-toggle">
-                    <button type="button" :class="['pm-btn', news.needsSoftware === true && 'active']" @click="news.needsSoftware = true" :disabled="loading">Да</button>
-                    <button type="button" :class="['pm-btn', news.needsSoftware === false && 'active']" @click="news.needsSoftware = false" :disabled="loading">Можно</button>
-                    <button type="button" :class="['pm-btn', news.needsSoftware == null && 'active']" @click="news.needsSoftware = undefined" :disabled="loading" title="Сброс">—</button>
+                    <button type="button" class="btn btn-outline btn-sm" :class="{ 'btn-success': news.needsSoftware === true }" @click="news.needsSoftware = true" :disabled="loading">Да</button>
+                    <button type="button" class="btn btn-outline btn-sm" :class="{ 'btn-primary': news.needsSoftware === false }" @click="news.needsSoftware = false" :disabled="loading">Можно</button>
+                    <button type="button" class="btn btn-outline btn-sm" :class="{ 'btn-gradient': news.needsSoftware == null }" @click="news.needsSoftware = undefined" :disabled="loading" title="Сброс">—</button>
                   </div>
                   <p class="form-hint">Требуются специальные инструменты/софт</p>
                 </div>
@@ -246,9 +246,6 @@ onMounted(load)
 .news-item { border:1px solid var(--border); border-radius:0.75rem; padding:1.5rem; background:var(--bg-tertiary); }
 .news-item-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; padding-bottom:0.5rem; border-bottom:1px solid var(--border); }
 .news-item-header h3 { color:var(--text-primary); margin:0; }
-.btn-remove { background:none; border:none; cursor:pointer; padding:0.5rem; border-radius:0.375rem; transition:background-color .2s ease; }
-.btn-remove:hover { background:rgba(239,68,68,0.2); }
-.btn-remove:disabled { opacity:.5; cursor:not-allowed; }
 .news-form { display:flex; flex-direction:column; gap:1rem; }
 .form-actions { display:flex; justify-content:center; gap:1rem; margin-top:2rem; }
 .error-message { position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); background:var(--bg-secondary); padding:2rem; border-radius:0.75rem; box-shadow:0 10px 25px rgba(0,0,0,0.5); border:1px solid var(--danger); text-align:center; z-index:1000; max-width:400px; width:90%; }
@@ -274,11 +271,7 @@ onMounted(load)
 .mini-spinner { width:1.45rem; height:1.45rem; border:3px solid rgba(255,255,255,0.35); border-top-color:#fff; border-radius:50%; animation:spin .85s linear infinite; }
 @keyframes spin { to { transform:rotate(360deg); } }
 
-.pm-toggle { display:flex; gap:.4rem; }
-.pm-btn { flex:1; background:var(--bg-tertiary); border:1px solid var(--border); padding:.55rem .6rem; font-size:.7rem; font-weight:600; letter-spacing:.4px; cursor:pointer; border-radius:.55rem; color:var(--text-secondary); transition:.18s background, .18s color, .18s border-color, .18s box-shadow; }
-.pm-btn:hover:not(:disabled) { background:rgba(255,255,255,0.08); color:var(--text-primary); }
-.pm-btn.active { background:var(--accent); color:#fff; border-color:var(--accent); box-shadow:0 0 0 1px var(--accent), 0 4px 12px -4px rgba(0,0,0,.5); }
-.pm-btn:disabled { opacity:.5; cursor:not-allowed; }
+.pm-toggle { display:flex; gap:.45rem; }
 
 @media (max-width:640px){
   .floating-add-news { bottom:1.1rem; right:1.1rem; width:3.25rem; height:3.25rem; font-size:1.4rem; }
