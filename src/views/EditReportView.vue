@@ -68,6 +68,24 @@
                   <input v-model="news.dateLocal" type="datetime-local" class="form-input" required :disabled="loading" />
                   <p class="form-hint">Сохраняется UTC, показывается локально</p>
                 </div>
+                <div class="form-group">
+                  <label class="form-label">Цена сдвинулась?</label>
+                  <div class="pm-toggle">
+                    <button type="button" :class="['pm-btn', news.priceMoved === true && 'active']" @click="news.priceMoved = true" :disabled="loading">Да</button>
+                    <button type="button" :class="['pm-btn', news.priceMoved === false && 'active']" @click="news.priceMoved = false" :disabled="loading">Нет</button>
+                    <button type="button" :class="['pm-btn', news.priceMoved == null && 'active']" @click="news.priceMoved = undefined" :disabled="loading" title="Сброс">—</button>
+                  </div>
+                  <p class="form-hint">Отметьте если движение цены подтвердилось</p>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Без софта не взять?</label>
+                  <div class="pm-toggle">
+                    <button type="button" :class="['pm-btn', news.needsSoftware === true && 'active']" @click="news.needsSoftware = true" :disabled="loading">Да</button>
+                    <button type="button" :class="['pm-btn', news.needsSoftware === false && 'active']" @click="news.needsSoftware = false" :disabled="loading">Нет</button>
+                    <button type="button" :class="['pm-btn', news.needsSoftware == null && 'active']" @click="news.needsSoftware = undefined" :disabled="loading" title="Сброс">—</button>
+                  </div>
+                  <p class="form-hint">Требуются специальные инструменты/софт</p>
+                </div>
               </div>
             </div>
           </div>
@@ -95,6 +113,19 @@
       title="Добавить новость"
       aria-label="Добавить новость"
     >➕</button>
+
+    <!-- Floating Save (Update) Button -->
+    <button
+      type="button"
+      class="floating-save-report"
+      @click="handleSubmit"
+      :disabled="!isFormValid || loading"
+      :title="!isFormValid ? 'Форма неполная' : 'Сохранить изменения'"
+      aria-label="Сохранить отчет"
+    >
+      <span v-if="!loading">💾</span>
+      <span v-else class="mini-spinner" aria-hidden="true"></span>
+    </button>
   </div>
   <div v-else class="loading-state"><div class="loading-spinner"></div><p>Загрузка...</p></div>
 </template>
@@ -127,7 +158,7 @@ function toLocalInputValue(d: Date): string {
 function generateId(): string { return Date.now().toString(36) + Math.random().toString(36).slice(2) }
 
 function addNews() {
-  newsItems.value.push({ id: generateId(), title:'', text:'', url:'', tokenName:'', comment:'', impact:0, date:new Date(), dateLocal: toLocalInputValue(new Date()) })
+  newsItems.value.push({ id: generateId(), title:'', text:'', url:'', tokenName:'', comment:'', impact:0, date:new Date(), priceMoved: undefined, needsSoftware: undefined, dateLocal: toLocalInputValue(new Date()) })
 }
 function removeNews(i:number){ newsItems.value.splice(i,1) }
 
@@ -143,7 +174,7 @@ async function load() {
     if (!rep) throw new Error('Отчет не найден')
     title.value = rep.title
     reportForm.description = rep.description || ''
-    newsItems.value = rep.news.map(n => ({ ...n, dateLocal: toLocalInputValue(new Date(n.date)) }))
+  newsItems.value = rep.news.map(n => ({ ...n, dateLocal: toLocalInputValue(new Date(n.date)), needsSoftware: n.needsSoftware }))
     loaded.value = true
   } catch(e:any) {
     error.value = e.message || 'Ошибка загрузки'
@@ -169,7 +200,9 @@ async function handleSubmit() {
         tokenName: n.tokenName.trim().toUpperCase(),
         comment: n.comment.trim(),
         impact: n.impact,
-        date: new Date(n.dateLocal)
+        date: new Date(n.dateLocal),
+        priceMoved: n.priceMoved,
+        needsSoftware: n.needsSoftware
       })),
       // createdAt и createdBy не меняем
     }
@@ -217,7 +250,26 @@ onMounted(load)
 .floating-add-news:disabled { opacity:.55; cursor:not-allowed; }
 .floating-add-news:focus-visible { outline:none; box-shadow:0 0 0 3px rgba(255,255,255,0.9),0 0 0 6px var(--primary); }
 
-@media (max-width:640px){ .floating-add-news { bottom:1.25rem; right:1.25rem; width:3.25rem; height:3.25rem; font-size:1.4rem; } }
+/* Floating Save Button */
+.floating-save-report { position:fixed; bottom:6.2rem; right:2rem; width:3.5rem; height:3.5rem; border-radius:50%; background:linear-gradient(145deg,var(--accent,#10b981) 0%, var(--accent,#10b981) 70%, var(--accent,#059669) 100%); color:#fff; font-size:1.55rem; font-weight:600; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 12px rgba(0,0,0,0.35),0 0 0 2px rgba(255,255,255,0.14),0 0 0 6px rgba(16,185,129,0.18); backdrop-filter:blur(5px) saturate(170%); transition:transform .22s ease, box-shadow .28s ease, filter .28s ease; z-index:901; }
+.floating-save-report:hover:not(:disabled){ transform:translateY(-3px) scale(1.07); box-shadow:0 10px 28px rgba(0,0,0,0.55),0 0 0 2px rgba(255,255,255,0.25),0 0 0 8px rgba(16,185,129,0.28); filter:brightness(1.1); }
+.floating-save-report:active:not(:disabled){ transform:scale(.9); }
+.floating-save-report:disabled { opacity:.5; cursor:not-allowed; filter:grayscale(.3); }
+.floating-save-report:focus-visible { outline:none; box-shadow:0 0 0 3px rgba(255,255,255,0.92),0 0 0 6px rgba(16,185,129,0.9); }
+
+.mini-spinner { width:1.45rem; height:1.45rem; border:3px solid rgba(255,255,255,0.35); border-top-color:#fff; border-radius:50%; animation:spin .85s linear infinite; }
+@keyframes spin { to { transform:rotate(360deg); } }
+
+.pm-toggle { display:flex; gap:.4rem; }
+.pm-btn { flex:1; background:var(--bg-tertiary); border:1px solid var(--border); padding:.55rem .6rem; font-size:.7rem; font-weight:600; letter-spacing:.4px; cursor:pointer; border-radius:.55rem; color:var(--text-secondary); transition:.18s background, .18s color, .18s border-color, .18s box-shadow; }
+.pm-btn:hover:not(:disabled) { background:rgba(255,255,255,0.08); color:var(--text-primary); }
+.pm-btn.active { background:var(--accent); color:#fff; border-color:var(--accent); box-shadow:0 0 0 1px var(--accent), 0 4px 12px -4px rgba(0,0,0,.5); }
+.pm-btn:disabled { opacity:.5; cursor:not-allowed; }
+
+@media (max-width:640px){
+  .floating-add-news { bottom:1.1rem; right:1.1rem; width:3.25rem; height:3.25rem; font-size:1.4rem; }
+  .floating-save-report { bottom:5.55rem; right:1.1rem; width:3.25rem; height:3.25rem; font-size:1.4rem; }
+}
 @media (max-width:768px){
   .form-row { grid-template-columns:1fr; }
   .news-header { flex-direction:column; gap:1rem; align-items:stretch; }

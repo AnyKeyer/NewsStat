@@ -122,6 +122,22 @@
                 <option value="oldest">Старые</option>
               </select>
             </div>
+            <div class="filter-block">
+              <span class="fb-label">Движение цены</span>
+              <div class="segmented small-seg">
+                <button type="button" :class="{active: priceMoveFilter==='all'}" @click="priceMoveFilter='all'">Все</button>
+                <button type="button" :class="{active: priceMoveFilter==='moved'}" @click="priceMoveFilter='moved'">✓ Сдвиг</button>
+                <button type="button" :class="{active: priceMoveFilter==='static'}" @click="priceMoveFilter='static'">○ Нет</button>
+              </div>
+            </div>
+            <div class="filter-block">
+              <span class="fb-label">Софт</span>
+              <div class="segmented small-seg">
+                <button type="button" :class="{active: softwareFilter==='all'}" @click="softwareFilter='all'">Все</button>
+                <button type="button" :class="{active: softwareFilter==='needs'}" @click="softwareFilter='needs'">⚙️ Да</button>
+                <button type="button" :class="{active: softwareFilter==='no'}" @click="softwareFilter='no'">Нет</button>
+              </div>
+            </div>
             <div class="filter-block wide">
               <span class="fb-label">Порог |impact| ≥ {{ minAbsImpact }}</span>
               <div class="impact-row">
@@ -161,6 +177,8 @@
                   <th style="width:70px;">Токен</th>
                   <th style="width:80px;">Импакт</th>
                   <th>Заголовок</th>
+                  <th style="width:70px;" title="Цена сдвинулась?">ΔЦена</th>
+                  <th style="width:55px;" title="Без софта не взять">⚙️</th>
                   <th style="width:110px;">Время</th>
                   <th style="width:140px;">Отчет</th>
                 </tr>
@@ -177,6 +195,17 @@
                     <div class="news-title" :title="n.title">{{ n.title }}</div>
                   </td>
                   <td class="col-date">{{ formatNewsDate(n.date) }}</td>
+                  <td class="col-move">
+                    <span class="move-indicator" :class="{ yes: n.priceMoved===true, no: n.priceMoved===false }" :title="n.priceMoved === true ? 'Подтвержденный сдвиг' : (n.priceMoved === false ? 'Сдвига не было' : 'Не отмечено')">
+                      <span v-if="n.priceMoved===true">✓</span>
+                      <span v-else-if="n.priceMoved===false">—</span>
+                      <span v-else>?</span>
+                    </span>
+                  </td>
+                  <td class="col-soft" :title="n.needsSoftware ? 'Без софта не взять' : '—'">
+                    <span v-if="n.needsSoftware" class="soft-indicator">⚙️</span>
+                    <span v-else class="soft-indicator none">—</span>
+                  </td>
                   <td class="col-report">
                     <router-link class="report-chip" :title="n.reportTitle" :aria-label="'Открыть отчет ' + n.reportTitle" :to="{ name: 'ReportDetail', params: { id: n.reportId } }">
                       <span class="rc-icon">📄</span>
@@ -215,7 +244,7 @@ interface DailyAggregate {
   positivePercent: number
   negativePercent: number
 }
-interface FlatNewsItem { id:string; reportId:string; reportTitle:string; tokenName:string; impact:number; date:Date; title:string }
+interface FlatNewsItem { id:string; reportId:string; reportTitle:string; tokenName:string; impact:number; date:Date; title:string; priceMoved?: boolean; needsSoftware?: boolean }
 
 const reportStore = useReportStore()
 const loadingAll = ref(false)
@@ -225,6 +254,8 @@ const dailyAggregates = ref<DailyAggregate[]>([])
 const allNews = ref<FlatNewsItem[]>([])
 // Фильтры новостей
 const newsDirection = ref<'all' | 'positive' | 'negative'>('all')
+const priceMoveFilter = ref<'all' | 'moved' | 'static'>('all')
+const softwareFilter = ref<'all' | 'needs' | 'no'>('all')
 const newsSort = ref<'abs' | 'growth' | 'decline' | 'newest' | 'oldest'>('abs')
 const minAbsImpact = ref(0)
 const newsSearch = ref('')
@@ -234,6 +265,10 @@ const filteredNews = computed(() => {
   if (newsDirection.value === 'positive') list = list.filter(n => n.impact>0)
   else if (newsDirection.value === 'negative') list = list.filter(n => n.impact<0)
   if (minAbsImpact.value>0) list = list.filter(n => Math.abs(n.impact) >= minAbsImpact.value)
+  if (priceMoveFilter.value === 'moved') list = list.filter(n => n.priceMoved === true)
+  else if (priceMoveFilter.value === 'static') list = list.filter(n => n.priceMoved === false)
+  if (softwareFilter.value === 'needs') list = list.filter(n => n.needsSoftware === true)
+  else if (softwareFilter.value === 'no') list = list.filter(n => n.needsSoftware === false)
   if (newsSearch.value.trim()) {
     const q = newsSearch.value.trim().toLowerCase()
     list = list.filter(n => n.tokenName.toLowerCase().includes(q) || n.title.toLowerCase().includes(q))
@@ -249,7 +284,7 @@ const filteredNews = computed(() => {
   return list.slice(0, newsTopN.value)
 })
 function formatNewsDate(d: Date){ return new Intl.DateTimeFormat('ru-RU',{ day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'}).format(d) }
-function resetFilters(){ newsDirection.value='all'; newsSort.value='abs'; minAbsImpact.value=0; newsSearch.value=''; newsTopN.value=50 }
+function resetFilters(){ newsDirection.value='all'; newsSort.value='abs'; minAbsImpact.value=0; newsSearch.value=''; newsTopN.value=50; priceMoveFilter.value='all'; softwareFilter.value='all' }
 
 const totalReports = computed(() => reportStore.reports.length)
 const totalNews = computed(() => dailyAggregates.value.reduce((sum, d) => sum + d.totalNews, 0))
@@ -342,7 +377,7 @@ async function loadAll() {
       for (const n of report.news) {
         if (n.impact > 0) agg.positiveNews += 1
         else if (n.impact < 0) agg.negativeNews += 1
-        flat.push({ id: n.id, reportId: report.id, reportTitle: report.title, tokenName: (n.tokenName||'').toUpperCase(), impact: n.impact, date: new Date(n.date), title: n.title })
+  flat.push({ id: n.id, reportId: report.id, reportTitle: report.title, tokenName: (n.tokenName||'').toUpperCase(), impact: n.impact, date: new Date(n.date), title: n.title, priceMoved: n.priceMoved, needsSoftware: n.needsSoftware })
       }
     }
 
@@ -441,6 +476,7 @@ onMounted(() => {
 .segmented button + button { border-left:1px solid var(--border); }
 .segmented button.active { background:var(--accent); color:#fff; }
 .segmented button:not(.active):hover { background:rgba(255,255,255,0.06); color:var(--text-primary); }
+.segmented.small-seg button { padding:.45rem .6rem; font-size:.6rem; }
 
 .select { width:100%; background:var(--bg-tertiary); border:1px solid var(--border); border-radius:.6rem; padding:.55rem .7rem; font-size:.75rem; color:var(--text-primary); }
 .select:focus { outline:2px solid var(--accent); outline-offset:2px; }
@@ -497,6 +533,13 @@ onMounted(() => {
 .col-impact { width:88px; }
 .col-date { width:110px; font-variant-numeric:tabular-nums; }
 .col-report { width:180px; }
+.col-move { width:70px; text-align:center; }
+.col-soft { width:55px; text-align:center; }
+.move-indicator { display:inline-flex; align-items:center; justify-content:center; width:34px; height:34px; border-radius:.65rem; background:var(--bg-tertiary); border:1px solid var(--border); font-size:.7rem; font-weight:600; letter-spacing:.5px; color:var(--text-secondary); box-shadow:inset 0 0 0 1px var(--border); }
+.move-indicator.yes { background:rgba(16,185,129,0.15); color:var(--success); border-color:rgba(16,185,129,0.4); }
+.move-indicator.no { background:rgba(239,68,68,0.18); color:var(--danger); border-color:rgba(239,68,68,0.45); }
+.soft-indicator { display:inline-flex; align-items:center; justify-content:center; width:34px; height:34px; border-radius:.65rem; background:var(--bg-tertiary); border:1px solid var(--border); font-size:.75rem; }
+.soft-indicator.none { opacity:.35; font-size:.7rem; }
 
 /* tighten existing spacing if needed */
 .news-table td { padding:.55rem .7rem; }

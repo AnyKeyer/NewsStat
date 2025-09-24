@@ -7,6 +7,10 @@ export interface NewsItem {
   comment: string
   impact: number // процент изменения (может быть положительным или отрицательным)
   date: Date
+  /** Цена реально изменилась вскоре после новости (подтвержденное влияние) */
+  priceMoved?: boolean
+  /** Нужен специализированный софт / инструменты чтобы воспользоваться ситуацией ("без софта не взять") */
+  needsSoftware?: boolean
 }
 
 export interface Report {
@@ -26,6 +30,14 @@ export interface ReportStatistics {
   averageDecline: number
   positiveNewsCount: number
   negativeNewsCount: number
+  /** Количество новостей, после которых цена реально двинулась */
+  movedCount: number
+  /** Количество новостей, после которых цена не изменилась */
+  staticCount: number
+  /** Количество новостей без отметки (priceMoved не указан) */
+  unmarkedCount: number
+  /** Процент новостей с движением (movedCount / totalNews * 100) */
+  movedPercent: number
 }
 
 export interface User {

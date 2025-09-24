@@ -5,59 +5,68 @@
         <h2 class="title">📊 Итоги отчета</h2>
         <p class="subtitle" v-if="subtitle">{{ subtitle }}</p>
       </div>
-      <div class="badge" :class="trendClass">
-        <span v-if="netImpact > 0">▲</span>
-        <span v-else-if="netImpact < 0">▼</span>
-        <span v-else>○</span>
-        {{ netImpactLabel }}
+      <div class="badge movement" v-if="stats.totalNews > 0">
+        <span class="icon">Δ</span>
+        <span>{{ movedPercentLabel }}</span>
       </div>
     </div>
 
-    <div class="kpis">
+    <div class="kpis movement-grid">
       <div class="kpi total">
-        <div class="kpi-label">Всего новостей</div>
+        <div class="kpi-label">Всего</div>
         <div class="kpi-value">{{ stats.totalNews }}</div>
       </div>
+      <div class="kpi moved" :class="{ faded: stats.movedCount === 0 }">
+        <div class="kpi-label">Сдвиг был</div>
+        <div class="kpi-value">
+          <span>{{ stats.movedCount }}</span>
+          <small v-if="stats.totalNews">{{ movedPercent.toFixed(0) }}%</small>
+        </div>
+      </div>
+      <div class="kpi static" :class="{ faded: stats.staticCount === 0 }">
+        <div class="kpi-label">Без сдвига</div>
+        <div class="kpi-value">
+          <span>{{ stats.staticCount }}</span>
+          <small v-if="stats.totalNews">{{ staticPercent.toFixed(0) }}%</small>
+        </div>
+      </div>
+      <div class="kpi unmarked" v-if="stats.unmarkedCount > 0">
+        <div class="kpi-label">Не отмечено</div>
+        <div class="kpi-value">
+          <span>{{ stats.unmarkedCount }}</span>
+          <small>{{ unmarkedPercent.toFixed(0) }}%</small>
+        </div>
+      </div>
+    </div>
+
+    <div class="progress-row" v-if="stats.totalNews > 0">
+      <div class="progress-bar movement">
+        <div class="segment moved" :style="{ width: movedPercent + '%' }" />
+        <div class="segment static" :style="{ width: staticPercent + '%' }" />
+        <div class="segment unmarked" v-if="stats.unmarkedCount" :style="{ width: unmarkedPercent + '%' }" />
+      </div>
+      <div class="progress-legend movement">
+        <span class="legend-item moved">Сдвиг {{ movedPercent.toFixed(0) }}%</span>
+        <span class="legend-item static">Без {{ staticPercent.toFixed(0) }}%</span>
+        <span v-if="stats.unmarkedCount" class="legend-item unmarked">? {{ unmarkedPercent.toFixed(0) }}%</span>
+      </div>
+    </div>
+
+    <div class="kpis secondary-kpis" v-if="stats.totalNews > 0">
       <div class="kpi positive" :class="{ faded: stats.positiveNewsCount === 0 }">
-        <div class="kpi-label">Позитив</div>
+        <div class="kpi-label">Рост (avg)</div>
         <div class="kpi-value">
           <span>{{ stats.positiveNewsCount }}</span>
           <small v-if="stats.positiveNewsCount">+{{ stats.averageGrowth.toFixed(1) }}%</small>
         </div>
       </div>
       <div class="kpi negative" :class="{ faded: stats.negativeNewsCount === 0 }">
-        <div class="kpi-label">Негатив</div>
+        <div class="kpi-label">Падение (avg)</div>
         <div class="kpi-value">
           <span>{{ stats.negativeNewsCount }}</span>
           <small v-if="stats.negativeNewsCount">-{{ stats.averageDecline.toFixed(1) }}%</small>
         </div>
       </div>
-      <div class="kpi ratio">
-        <div class="kpi-label">Соотношение</div>
-        <div class="kpi-value">
-          <span v-if="stats.positiveNewsCount + stats.negativeNewsCount > 0">
-            {{ ratioLabel }}
-          </span>
-          <small v-else>—</small>
-        </div>
-      </div>
-    </div>
-
-    <div class="progress-row" v-if="stats.totalNews > 0">
-      <div class="progress-bar">
-        <div class="segment positive" :style="{ width: positivePercent + '%' }" />
-        <div class="segment negative" :style="{ width: negativePercent + '%' }" />
-        <div class="segment neutral" :style="{ width: neutralPercent + '%' }" />
-      </div>
-      <div class="progress-legend">
-        <span class="legend-item pos">Позитив {{ positivePercent.toFixed(0) }}%</span>
-        <span class="legend-item neg">Негатив {{ negativePercent.toFixed(0) }}%</span>
-        <span v-if="neutralPercent > 0" class="legend-item neu">Нейтрал {{ neutralPercent.toFixed(0) }}%</span>
-      </div>
-    </div>
-
-    <div class="insight" v-if="insight">
-      <strong>Insight:</strong> {{ insight }}
     </div>
   </div>
 </template>
@@ -75,58 +84,10 @@ const props = defineProps<Props>()
 
 const stats = computed(() => props.stats)
 
-const positivePercent = computed(() => {
-  if (!stats.value) return 0
-  return stats.value.totalNews === 0 ? 0 : (stats.value.positiveNewsCount / stats.value.totalNews) * 100
-})
-const negativePercent = computed(() => {
-  if (!stats.value) return 0
-  return stats.value.totalNews === 0 ? 0 : (stats.value.negativeNewsCount / stats.value.totalNews) * 100
-})
-const neutralPercent = computed(() => {
-  if (!stats.value) return 0
-  const neutral = stats.value.totalNews - stats.value.positiveNewsCount - stats.value.negativeNewsCount
-  return stats.value.totalNews === 0 ? 0 : (neutral / stats.value.totalNews) * 100
-})
-
-const ratioLabel = computed(() => {
-  if (!stats.value) return ''
-  const pos = stats.value.positiveNewsCount
-  const neg = stats.value.negativeNewsCount
-  if (pos === 0 && neg === 0) return '—'
-  if (neg === 0) return '∞'
-  return `${pos}:${neg}`
-})
-
-const netImpact = computed(() => {
-  if (!stats.value) return 0
-  // Условный суммарный импакт = средний рост - средний спад (как модуль)
-  return stats.value.averageGrowth - stats.value.averageDecline
-})
-
-const netImpactLabel = computed(() => {
-  const v = netImpact.value
-  if (v > 0) return `+${v.toFixed(1)}%`
-  if (v < 0) return `${v.toFixed(1)}%`
-  return '0%'
-})
-
-const trendClass = computed(() => {
-  const v = netImpact.value
-  if (v > 0.5) return 'trend-up'
-  if (v < -0.5) return 'trend-down'
-  return 'trend-flat'
-})
-
-const insight = computed(() => {
-  if (!stats.value) return ''
-  const { positiveNewsCount, negativeNewsCount, averageGrowth, averageDecline } = stats.value
-  if (positiveNewsCount === 0 && negativeNewsCount === 0) return 'Недостаточно данных для выводов'
-  if (positiveNewsCount > negativeNewsCount && averageGrowth > averageDecline) return 'Преобладает позитивный тон и сила сигналов'
-  if (negativeNewsCount > positiveNewsCount && averageDecline > averageGrowth) return 'Рынок под давлением: негативные новости доминируют'
-  if (Math.abs(positiveNewsCount - negativeNewsCount) <= 1) return 'Баланс сил: распределение новостей почти равное'
-  return ''
-})
+const movedPercent = computed(() => stats.value ? stats.value.movedPercent : 0)
+const staticPercent = computed(() => stats.value ? (stats.value.totalNews === 0 ? 0 : (stats.value.staticCount / stats.value.totalNews) * 100) : 0)
+const unmarkedPercent = computed(() => stats.value ? (stats.value.totalNews === 0 ? 0 : (stats.value.unmarkedCount / stats.value.totalNews) * 100) : 0)
+const movedPercentLabel = computed(() => `${movedPercent.value.toFixed(0)}%`)
 </script>
 
 <style scoped>
@@ -183,19 +144,20 @@ const insight = computed(() => {
   font-weight: 500;
 }
 .badge {
-  font-size: 0.85rem;
+  font-size: 0.75rem;
   font-weight: 600;
-  padding: 0.5rem 0.9rem;
-  border-radius: 999px;
+  padding: 0.55rem 0.85rem;
+  border-radius: 0.85rem;
   background: var(--bg-tertiary);
   display: flex;
   align-items: center;
   gap: 0.4rem;
   box-shadow: inset 0 0 0 1px var(--border);
+  letter-spacing: .5px;
+  text-transform: uppercase;
 }
-.badge.trend-up { color: var(--success); box-shadow: inset 0 0 0 1px rgba(16,185,129,0.4); }
-.badge.trend-down { color: var(--danger); box-shadow: inset 0 0 0 1px rgba(239,68,68,0.4); }
-.badge.trend-flat { color: var(--text-secondary); }
+.badge.movement { color: var(--success); box-shadow: inset 0 0 0 1px rgba(16,185,129,0.4); }
+.badge .icon { font-size: .9rem; line-height: 1; }
 
 .kpis {
   display: grid;
@@ -203,6 +165,8 @@ const insight = computed(() => {
   gap: 1rem;
   margin-bottom: 1.25rem;
 }
+.kpis.movement-grid { grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); }
+.kpis.secondary-kpis { margin-top: .25rem; }
 .kpi {
   background: rgba(255,255,255,0.02);
   backdrop-filter: blur(4px);
@@ -263,9 +227,9 @@ const insight = computed(() => {
   position: relative;
 }
 .progress-bar .segment { height: 100%; transition: width 0.6s ease; }
-.segment.positive { background: linear-gradient(90deg, rgba(16,185,129,0.9), rgba(16,185,129,0.5)); }
-.segment.negative { background: linear-gradient(90deg, rgba(239,68,68,0.85), rgba(239,68,68,0.45)); }
-.segment.neutral { background: linear-gradient(90deg, rgba(107,114,128,0.6), rgba(107,114,128,0.3)); }
+.segment.moved { background: linear-gradient(90deg, rgba(16,185,129,0.95), rgba(16,185,129,0.55)); }
+.segment.static { background: linear-gradient(90deg, rgba(107,114,128,0.6), rgba(107,114,128,0.3)); }
+.segment.unmarked { background: linear-gradient(90deg, rgba(234,179,8,0.7), rgba(234,179,8,0.35)); }
 
 .progress-legend {
   display: flex;
@@ -277,9 +241,9 @@ const insight = computed(() => {
   letter-spacing: 0.5px;
 }
 .legend-item { opacity: 0.85; font-weight: 600; }
-.legend-item.pos { color: var(--success); }
-.legend-item.neg { color: var(--danger); }
-.legend-item.neu { color: var(--text-secondary); }
+.legend-item.moved { color: var(--success); }
+.legend-item.static { color: var(--text-secondary); }
+.legend-item.unmarked { color: var(--warning, #eab308); }
 
 .insight {
   margin-top: 0.75rem;

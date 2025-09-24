@@ -154,6 +154,24 @@
                   />
                   <p class="form-hint">Сохраняется в UTC, отображается в локальной зоне зрителя</p>
                 </div>
+                <div class="form-group">
+                  <label class="form-label">Цена сдвинулась?</label>
+                  <div class="pm-toggle">
+                    <button type="button" :class="['pm-btn', news.priceMoved === true && 'active']" @click="news.priceMoved = true" :disabled="loading">Да</button>
+                    <button type="button" :class="['pm-btn', news.priceMoved === false && 'active']" @click="news.priceMoved = false" :disabled="loading">Нет</button>
+                    <button type="button" :class="['pm-btn', news.priceMoved == null && 'active']" @click="news.priceMoved = undefined" :disabled="loading" title="Сброс">—</button>
+                  </div>
+                  <p class="form-hint">Отметьте, если после новости цена реально дернулась в прогнозируемом направлении</p>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Без софта не взять?</label>
+                  <div class="pm-toggle">
+                    <button type="button" :class="['pm-btn', news.needsSoftware === true && 'active']" @click="news.needsSoftware = true" :disabled="loading">Да</button>
+                    <button type="button" :class="['pm-btn', news.needsSoftware === false && 'active']" @click="news.needsSoftware = false" :disabled="loading">Нет</button>
+                    <button type="button" :class="['pm-btn', news.needsSoftware == null && 'active']" @click="news.needsSoftware = undefined" :disabled="loading" title="Сброс">—</button>
+                  </div>
+                  <p class="form-hint">Отметьте, если реализация требует спец. инструментов/софта</p>
+                </div>
               </div>
             </div>
           </div>
@@ -258,6 +276,8 @@ function addNews(): void {
     comment: '',
     impact: 0,
     date: now,
+    priceMoved: undefined,
+    needsSoftware: undefined,
     dateLocal: toLocalInputValue(now)
   })
 }
@@ -288,7 +308,9 @@ async function handleSubmit(): Promise<void> {
             tokenName: n.tokenName.trim().toUpperCase(),
             comment: n.comment.trim(),
             impact: n.impact,
-            date
+            date,
+            priceMoved: n.priceMoved,
+            needsSoftware: n.needsSoftware
         }
       }),
       createdAt: new Date(),
@@ -568,4 +590,10 @@ function toLocalInputValue(d: Date): string {
     padding: 1.5rem;
   }
 }
+
+.pm-toggle { display:flex; gap:.4rem; }
+.pm-btn { flex:1; background:var(--bg-tertiary); border:1px solid var(--border); padding:.55rem .6rem; font-size:.7rem; font-weight:600; letter-spacing:.4px; cursor:pointer; border-radius:.55rem; color:var(--text-secondary); transition:.18s background, .18s color, .18s border-color, .18s box-shadow; }
+.pm-btn:hover:not(:disabled) { background:rgba(255,255,255,0.08); color:var(--text-primary); }
+.pm-btn.active { background:var(--accent); color:#fff; border-color:var(--accent); box-shadow:0 0 0 1px var(--accent), 0 4px 12px -4px rgba(0,0,0,.5); }
+.pm-btn:disabled { opacity:.5; cursor:not-allowed; }
 </style>

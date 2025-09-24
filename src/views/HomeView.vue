@@ -65,16 +65,11 @@
                 </div>
                 <div class="mini-stats" v-if="statsMap[report.id]">
                   <span class="badge accent" v-if="statsMap[report.id].totalNews">{{ statsMap[report.id].totalNews }} шт</span>
-                  <span class="badge success" v-if="statsMap[report.id].averageGrowth && statsMap[report.id].averageGrowth > 0">+{{ statsMap[report.id].averageGrowth.toFixed(1) }}%</span>
-                  <span class="badge danger" v-if="statsMap[report.id].averageDecline && statsMap[report.id].averageDecline > 0">-{{ statsMap[report.id].averageDecline.toFixed(1) }}%</span>
+                  <span class="badge success" v-if="statsMap[report.id].movedCount">Δ {{ statsMap[report.id].movedCount }}/{{ statsMap[report.id].totalNews }} ({{ statsMap[report.id].movedPercent.toFixed(0) }}%)</span>
+                  <span class="badge muted" v-if="statsMap[report.id].unmarkedCount">? {{ statsMap[report.id].unmarkedCount }}</span>
                 </div>
               </div>
-              <div class="report-progress" v-if="statsMap[report.id]">
-                <div class="progress-bar mini">
-                  <div class="seg pos" :style="{ width: positivePercent(report.id) + '%' }"></div>
-                  <div class="seg neg" :style="{ width: negativePercent(report.id) + '%' }"></div>
-                </div>
-              </div>
+              <!-- Сентимент прогресс можно скрыть или оставить при необходимости; пока скрываем -->
             </div>
             <div class="report-actions" v-if="canDeleteReports">
               <button 
@@ -246,6 +241,15 @@ async function loadReportStats(reportId: string) {
     if (report && report.news) {
       const positiveNews = report.news.filter(n => n.impact > 0)
       const negativeNews = report.news.filter(n => n.impact < 0)
+      // Movement classification
+      let movedCount = 0
+      let staticCount = 0
+      let unmarkedCount = 0
+      for (const n of report.news) {
+        if (n.priceMoved === true) movedCount++
+        else if (n.priceMoved === false) staticCount++
+        else unmarkedCount++
+      }
       
       const stats: ReportStatistics = {
         totalNews: report.news.length,
@@ -257,7 +261,11 @@ async function loadReportStats(reportId: string) {
           ? negativeNews.reduce((sum, n) => sum + n.impact, 0) / negativeNews.length
           : 0,
         positiveNewsCount: positiveNews.length,
-        negativeNewsCount: negativeNews.length
+        negativeNewsCount: negativeNews.length,
+        movedCount,
+        staticCount,
+        unmarkedCount,
+        movedPercent: report.news.length === 0 ? 0 : (movedCount / report.news.length) * 100
       }
       
       reportStatsCache.value.set(reportId, stats)

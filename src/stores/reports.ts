@@ -28,13 +28,28 @@ export const useReportStore = defineStore('reports', () => {
       ? Math.abs(negativeNews.reduce((sum, n) => sum + n.impact, 0) / negativeNews.length)
       : 0
 
+    // Movement metrics
+    let movedCount = 0
+    let staticCount = 0
+    let unmarkedCount = 0
+    for (const n of news) {
+      if (n.priceMoved === true) movedCount++
+      else if (n.priceMoved === false) staticCount++
+      else unmarkedCount++
+    }
+    const movedPercent = totalNews === 0 ? 0 : (movedCount / totalNews) * 100
+
     return {
       totalNews,
       workingNews,
       averageGrowth,
       averageDecline,
       positiveNewsCount: positiveNews.length,
-      negativeNewsCount: negativeNews.length
+      negativeNewsCount: negativeNews.length,
+      movedCount,
+      staticCount,
+      unmarkedCount,
+      movedPercent
     }
   })
 
