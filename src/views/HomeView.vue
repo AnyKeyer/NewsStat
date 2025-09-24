@@ -6,6 +6,25 @@
       <button @click="loadReports" class="btn btn-secondary" style="margin-top: 1rem;">
         🔄 Обновить список
       </button>
+      <div v-if="reportStore.reports.length" class="pagination-controls top">
+        <div class="page-size">
+          <label>
+            На странице:
+            <select v-model.number="pageSize">
+              <option :value="20">20</option>
+              <option :value="50">50</option>
+              <option :value="100">100</option>
+            </select>
+          </label>
+        </div>
+        <div class="pager" v-if="totalPages > 1">
+          <button class="btn btn-secondary" :disabled="currentPage === 1" @click="goToPage(1)">«</button>
+          <button class="btn btn-secondary" :disabled="currentPage === 1" @click="prevPage">‹</button>
+          <span class="page-info">Стр. {{ currentPage }} / {{ totalPages }}</span>
+          <button class="btn btn-secondary" :disabled="currentPage === totalPages" @click="nextPage">›</button>
+          <button class="btn btn-secondary" :disabled="currentPage === totalPages" @click="goToPage(totalPages)">»</button>
+        </div>
+      </div>
     </div>
 
     <!-- Состояние загрузки -->
@@ -69,6 +88,15 @@
           </div>
         </div>
       </div>
+      <div class="pagination-controls bottom" v-if="totalPages > 1">
+        <div class="pager">
+          <button class="btn btn-secondary" :disabled="currentPage === 1" @click="goToPage(1)">« Первая</button>
+          <button class="btn btn-secondary" :disabled="currentPage === 1" @click="prevPage">‹ Назад</button>
+          <span class="page-info">Страница {{ currentPage }} из {{ totalPages }}</span>
+            <button class="btn btn-secondary" :disabled="currentPage === totalPages" @click="nextPage">Вперёд ›</button>
+          <button class="btn btn-secondary" :disabled="currentPage === totalPages" @click="goToPage(totalPages)">Последняя »</button>
+        </div>
+      </div>
     </div>
 
     <!-- Пустое состояние -->
@@ -83,7 +111,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, onActivated, computed, ref } from 'vue'
+import { onMounted, onActivated, computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useReportStore } from '@/stores/reports'
 import { useAuthStore } from '@/stores/auth'
@@ -111,20 +139,40 @@ const canDeleteReports = computed(() => {
   return authStore.user?.role === 'admin'
 })
 
+// Пагинация
+const pageSize = ref(20)
+const currentPage = ref(1)
+
+const sortedReports = computed(() => {
+  return [...reportStore.reports].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+})
+
+const totalPages = computed(() => {
+  return Math.max(1, Math.ceil(sortedReports.value.length / pageSize.value))
+})
+
+const paginatedReports = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value
+  return sortedReports.value.slice(start, start + pageSize.value)
+})
+
+watch([pageSize, () => reportStore.reports.length], () => {
+  if (currentPage.value > totalPages.value) currentPage.value = totalPages.value
+  if (currentPage.value < 1) currentPage.value = 1
+})
+
+function nextPage() { if (currentPage.value < totalPages.value) currentPage.value++ }
+function prevPage() { if (currentPage.value > 1) currentPage.value-- }
+function goToPage(p: number) { const t = Math.min(Math.max(1, p), totalPages.value); currentPage.value = t }
+
 const reportsByDate = computed(() => {
   const groups: DateGroup[] = []
   const groupMap = new Map<string, Array<{ id: string; title: string; createdAt: Date }>>()
-
-  // Группируем отчеты по дням
-  for (const report of reportStore.reports) {
+  for (const report of paginatedReports.value) {
     const dateKey = formatDateKey(report.createdAt)
-    if (!groupMap.has(dateKey)) {
-      groupMap.set(dateKey, [])
-    }
+    if (!groupMap.has(dateKey)) groupMap.set(dateKey, [])
     groupMap.get(dateKey)!.push(report)
   }
-
-  // Преобразуем в массив с сортировкой
   for (const [dateKey, reports] of groupMap.entries()) {
     groups.push({
       date: dateKey,
@@ -132,7 +180,6 @@ const reportsByDate = computed(() => {
       reports: reports.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
     })
   }
-
   return groups.sort((a, b) => b.date.localeCompare(a.date))
 })
 
@@ -403,6 +450,14 @@ onActivated(() => {
 .empty-content p {
   color: var(--text-secondary);
 }
+
+.pagination-controls { display:flex; align-items:center; justify-content:center; gap:1.25rem; flex-wrap:wrap; margin-top:1.25rem; }
+.pagination-controls.top { margin-top:1.5rem; }
+.pagination-controls .pager { display:flex; align-items:center; gap:.5rem; flex-wrap:wrap; }
+.pagination-controls .page-info { font-size:.85rem; letter-spacing:.5px; color:var(--text-secondary); font-weight:500; }
+.pagination-controls select { background: var(--bg-tertiary); border:1px solid var(--border); color:var(--text-primary); padding:.35rem .55rem; border-radius:.45rem; font-size:.85rem; }
+.pagination-controls button.btn { padding:.45rem .7rem; font-size:.8rem; }
+
 
 @media (max-width: 768px) {
   .header-section h1 {

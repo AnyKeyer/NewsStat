@@ -29,6 +29,13 @@
             <span class="meta-item">
               📅 {{ formatDate(report.createdAt) }}
             </span>
+            <span
+              v-if="report.updatedAt && report.updatedAt.getTime() !== report.createdAt.getTime()"
+              class="meta-item"
+              :title="'Обновлено: ' + formatDate(report.updatedAt as Date)"
+            >
+              🔄 {{ formatDate(report.updatedAt as Date) }}
+            </span>
             <span v-if="report.createdBy" class="meta-item">
               👤 {{ report.createdBy }}
             </span>
@@ -36,6 +43,11 @@
         </div>
         <div class="header-actions">
           <router-link to="/" class="btn btn-secondary">← Назад</router-link>
+          <router-link
+            v-if="authStore.isAuthenticated"
+            :to="{ name: 'EditReport', params: { id: report.id } }"
+            class="btn btn-primary"
+          >✏️ Редактировать</router-link>
         </div>
       </div>
 
@@ -106,7 +118,7 @@
                 >
                   🔗 Источник
                 </a>
-                <span class="news-date">{{ formatDate(newsItem.date) }}</span>
+                <span class="news-date" :title="isoString(newsItem.date)">{{ formatDateTime(newsItem.date) }}</span>
               </div>
             </div>
           </div>
@@ -120,6 +132,7 @@
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useReportStore } from '@/stores/reports'
+import { useAuthStore } from '@/stores/auth'
 import metaService from '@/services/metaService'
 import ReportStatsCard from '@/components/ReportStatsCard.vue'
 
@@ -130,6 +143,7 @@ interface Props {
 const props = defineProps<Props>()
 const route = useRoute()
 const reportStore = useReportStore()
+const authStore = useAuthStore()
 
 const newsFilter = ref<'all' | 'positive' | 'negative'>('all')
 
@@ -169,6 +183,18 @@ function formatDate(date: Date): string {
     hour: '2-digit',
     minute: '2-digit'
   }).format(date)
+}
+
+function formatDateTime(date: Date): string {
+  // Более компактный формат для новостей
+  return new Intl.DateTimeFormat('ru-RU', {
+    day: '2-digit', month: '2-digit', year: '2-digit',
+    hour: '2-digit', minute: '2-digit'
+  }).format(date)
+}
+
+function isoString(date: Date): string {
+  return date.toISOString()
 }
 
 async function loadReport() {

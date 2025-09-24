@@ -103,6 +103,32 @@ export const useReportStore = defineStore('reports', () => {
     }
   }
 
+  async function updateReport(updated: Report) {
+    loading.value = true
+    error.value = null
+    try {
+      updated.updatedAt = new Date()
+      console.log(`Обновляем отчет ${updated.id} в R2...`)
+      await r2Service.uploadReport(updated)
+      // Обновляем в списке (если есть)
+      const idx = reports.value.findIndex(r => r.id === updated.id)
+      if (idx !== -1) {
+        reports.value[idx] = { id: updated.id, title: updated.title, createdAt: updated.createdAt }
+      } else {
+        // если отчета не было в списке (редкий случай) добавим
+        reports.value.unshift({ id: updated.id, title: updated.title, createdAt: updated.createdAt })
+      }
+      currentReport.value = updated
+      console.log(`Отчет ${updated.id} обновлен`)
+    } catch (err) {
+      error.value = 'Не удалось обновить отчет'
+      console.error(err)
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
   async function deleteReport(reportId: string) {
     loading.value = true
     error.value = null
@@ -146,6 +172,7 @@ export const useReportStore = defineStore('reports', () => {
     loadReports,
     loadReport,
     saveReport,
+  updateReport,
     deleteReport,
     clearCurrentReport,
     clearError

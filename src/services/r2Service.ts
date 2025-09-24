@@ -56,6 +56,9 @@ class R2Service {
         
         // Преобразуем строки дат обратно в Date объекты
         report.createdAt = new Date(report.createdAt)
+        if (report.updatedAt) {
+          report.updatedAt = new Date(report.updatedAt)
+        }
         report.news.forEach(news => {
           news.date = new Date(news.date)
         })

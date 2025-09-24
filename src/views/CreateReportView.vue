@@ -141,6 +141,20 @@
                   :disabled="loading"
                 ></textarea>
               </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">Время появления (локальное)*</label>
+                  <input
+                    v-model="news.dateLocal"
+                    type="datetime-local"
+                    class="form-input"
+                    required
+                    :disabled="loading"
+                  />
+                  <p class="form-hint">Сохраняется в UTC, отображается в локальной зоне зрителя</p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -167,8 +181,18 @@
       <p>{{ error }}</p>
       <button @click="error = null" class="btn btn-secondary">Закрыть</button>
     </div>
+    <!-- Floating Add News Button -->
+    <button
+      type="button"
+      class="floating-add-news"
+      @click="addNews"
+      :disabled="newsItems.length >= 100 || loading"
+      title="Добавить новость"
+      aria-label="Добавить новость"
+    >➕</button>
   </div>
 </template>
+<!-- Floating Add News button inserted inside root container above -->
 
 <script setup lang="ts">
 import { computed, reactive, ref } from 'vue'
@@ -176,6 +200,9 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useReportStore } from '@/stores/reports'
 import type { Report, NewsItem } from '@/types'
+
+// Локальный тип с дополнительным полем dateLocal (строка для input datetime-local)
+type LocalNewsItem = NewsItem & { dateLocal: string }
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -188,7 +215,7 @@ const reportForm = reactive({
   description: ''
 })
 
-const newsItems = ref<NewsItem[]>([])
+const newsItems = ref<LocalNewsItem[]>([])
 
 const isFormValid = computed(() => {
   return (
@@ -198,7 +225,8 @@ const isFormValid = computed(() => {
       news.text.trim() &&
       news.url.trim() &&
       news.tokenName.trim() &&
-      news.impact !== 0
+      news.impact !== 0 &&
+      news.dateLocal
     )
   )
 })
@@ -220,7 +248,7 @@ function generateReportTitle(): string {
 
 function addNews(): void {
   if (newsItems.value.length >= 100) return
-  
+  const now = new Date()
   newsItems.value.push({
     id: generateId(),
     title: '',
@@ -229,7 +257,8 @@ function addNews(): void {
     tokenName: '',
     comment: '',
     impact: 0,
-    date: new Date()
+    date: now,
+    dateLocal: toLocalInputValue(now)
   })
 }
 
@@ -248,15 +277,22 @@ async function handleSubmit(): Promise<void> {
       id: generateId(),
       title: generateReportTitle(),
       description: reportForm.description.trim() || undefined,
-      news: newsItems.value.map(news => ({
-        ...news,
-        title: news.title.trim(),
-        text: news.text.trim(),
-        url: news.url.trim(),
-        tokenName: news.tokenName.trim().toUpperCase(),
-        comment: news.comment.trim()
-      })),
+      news: newsItems.value.map(n => {
+        // Преобразуем локальное значение (без TZ) в Date (будет интерпретировано как локальное) и храним как UTC ISO
+        const date = n.dateLocal ? new Date(n.dateLocal) : new Date()
+        return {
+          id: n.id,
+            title: n.title.trim(),
+            text: n.text.trim(),
+            url: n.url.trim(),
+            tokenName: n.tokenName.trim().toUpperCase(),
+            comment: n.comment.trim(),
+            impact: n.impact,
+            date
+        }
+      }),
       createdAt: new Date(),
+      updatedAt: new Date(),
       createdBy: authStore.user?.displayName || authStore.user?.username
     }
 
@@ -273,6 +309,15 @@ async function handleSubmit(): Promise<void> {
 
 // Добавляем одну новость по умолчанию
 addNews()
+
+function toLocalInputValue(d: Date): string {
+  const year = d.getFullYear()
+  const month = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  const hours = String(d.getHours()).padStart(2, '0')
+  const minutes = String(d.getMinutes()).padStart(2, '0')
+  return `${year}-${month}-${day}T${hours}:${minutes}`
+}
 </script>
 
 <style scoped>
@@ -438,6 +483,66 @@ addNews()
   color: var(--text-secondary);
   margin-top: 0.5rem;
   margin-bottom: 0;
+}
+
+/* Floating Add News Button */
+.floating-add-news {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-accent, #6366f1) 60%, var(--primary) 100%);
+  color: #fff;
+  font-size: 1.6rem;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.35), 0 0 0 2px rgba(255,255,255,0.14), 0 0 0 6px rgba(99,102,241,0.15);
+  backdrop-filter: blur(4px) saturate(160%);
+  transition: transform 0.2s ease, box-shadow 0.3s ease, filter 0.3s ease;
+  z-index: 900;
+}
+
+.floating-add-news:hover:not(:disabled) {
+  transform: translateY(-3px) scale(1.08);
+  box-shadow: 0 10px 26px rgba(0,0,0,0.55), 0 0 0 2px rgba(255,255,255,0.25), 0 0 0 8px rgba(99,102,241,0.25);
+  filter: brightness(1.08);
+}
+
+.floating-add-news:active:not(:disabled) {
+  transform: scale(0.92);
+}
+
+.floating-add-news:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.floating-add-news:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(255,255,255,0.9), 0 0 0 6px var(--primary); 
+}
+
+@media (max-width: 640px) {
+  .floating-add-news {
+    bottom: 1.25rem;
+    right: 1.25rem;
+    width: 3.25rem;
+    height: 3.25rem;
+    font-size: 1.4rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .floating-add-news, .floating-add-news:hover:not(:disabled) {
+    transition: none;
+    transform: none !important;
+  }
 }
 
 @media (max-width: 768px) {

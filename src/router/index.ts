@@ -15,10 +15,22 @@ const routes: RouteRecordRaw[] = [
     props: true
   },
   {
+    path: '/report/:id/edit',
+    name: 'EditReport',
+    component: () => import('@/views/EditReportView.vue'),
+    props: true,
+    meta: { requiresAuth: true }
+  },
+  {
     path: '/create-report',
     name: 'CreateReport',
     component: () => import('@/views/CreateReportView.vue'),
     meta: { requiresAuth: true }
+  },
+  {
+    path: '/stats',
+    name: 'StatsOverview',
+    component: () => import('@/views/StatsOverviewView.vue')
   },
   // Catch-all (optional inside SPA). Real 404 handled by public/404.html for deep links on GitHub Pages.
   {

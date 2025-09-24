@@ -16,6 +16,7 @@ export interface Report {
   news: NewsItem[]
   createdAt: Date
   createdBy?: string
+  updatedAt?: Date
 }
 
 export interface ReportStatistics {

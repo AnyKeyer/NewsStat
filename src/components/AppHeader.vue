@@ -5,6 +5,9 @@
         <router-link to="/" class="logo">
           📊 News Analysis
         </router-link>
+        <router-link to="/stats" class="btn btn-secondary stats-link">
+          📈 Общая статистика
+        </router-link>
         
         <div class="auth-section">
           <template v-if="authStore.isAuthenticated">
@@ -191,6 +194,10 @@ export default {
   display: flex;
   align-items: center;
   gap: 1rem;
+}
+
+.stats-link {
+  font-weight: 500;
 }
 
 .username {
