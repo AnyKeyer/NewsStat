@@ -83,18 +83,56 @@
                 <div class="form-group">
                   <label class="form-label">Цена сдвинулась?</label>
                   <div class="pm-toggle">
-                    <button type="button" class="btn btn-outline btn-sm" :class="{ 'btn-success': news.priceMoved === true }" @click="news.priceMoved = true" :disabled="loading">Да</button>
-                    <button type="button" class="btn btn-outline btn-sm" :class="{ 'btn-danger': news.priceMoved === false }" @click="news.priceMoved = false" :disabled="loading">Нет</button>
-                    <button type="button" class="btn btn-outline btn-sm" :class="{ 'btn-gradient': news.priceMoved == null }" @click="news.priceMoved = undefined" :disabled="loading" title="Сброс">—</button>
+                    <button
+                      type="button"
+                      class="btn btn-sm"
+                      :class="news.priceMoved === true ? 'btn-success' : 'btn-outline'"
+                      @click="news.priceMoved = true"
+                      :disabled="loading"
+                    >Да</button>
+                    <button
+                      type="button"
+                      class="btn btn-sm"
+                      :class="news.priceMoved === false ? 'btn-danger' : 'btn-outline'"
+                      @click="news.priceMoved = false"
+                      :disabled="loading"
+                    >Нет</button>
+                    <button
+                      type="button"
+                      class="btn btn-sm"
+                      :class="news.priceMoved == null ? 'btn-gradient' : 'btn-outline'"
+                      @click="news.priceMoved = undefined"
+                      :disabled="loading"
+                      title="Сброс"
+                    >—</button>
                   </div>
                   <p class="form-hint">Отметьте если движение цены подтвердилось</p>
                 </div>
                 <div class="form-group">
                   <label class="form-label">Без софта не взять?</label>
                   <div class="pm-toggle">
-                    <button type="button" class="btn btn-outline btn-sm" :class="{ 'btn-success': news.needsSoftware === true }" @click="news.needsSoftware = true" :disabled="loading">Да</button>
-                    <button type="button" class="btn btn-outline btn-sm" :class="{ 'btn-primary': news.needsSoftware === false }" @click="news.needsSoftware = false" :disabled="loading">Можно</button>
-                    <button type="button" class="btn btn-outline btn-sm" :class="{ 'btn-gradient': news.needsSoftware == null }" @click="news.needsSoftware = undefined" :disabled="loading" title="Сброс">—</button>
+                    <button
+                      type="button"
+                      class="btn btn-sm"
+                      :class="news.needsSoftware === true ? 'btn-success' : 'btn-outline'"
+                      @click="news.needsSoftware = true"
+                      :disabled="loading"
+                    >Да</button>
+                    <button
+                      type="button"
+                      class="btn btn-sm"
+                      :class="news.needsSoftware === false ? 'btn-primary' : 'btn-outline'"
+                      @click="news.needsSoftware = false"
+                      :disabled="loading"
+                    >Можно</button>
+                    <button
+                      type="button"
+                      class="btn btn-sm"
+                      :class="news.needsSoftware == null ? 'btn-gradient' : 'btn-outline'"
+                      @click="news.needsSoftware = undefined"
+                      :disabled="loading"
+                      title="Сброс"
+                    >—</button>
                   </div>
                   <p class="form-hint">Требуются специальные инструменты/софт</p>
                 </div>
@@ -272,6 +310,14 @@ onMounted(load)
 @keyframes spin { to { transform:rotate(360deg); } }
 
 .pm-toggle { display:flex; gap:.45rem; }
+/* Отключены переходы для кнопок в toggle-группах */
+.pm-toggle .btn { 
+  transition: none !important; 
+  box-shadow: none !important; 
+}
+.pm-toggle .btn:before { display:none !important; }
+.pm-toggle .btn:hover { filter:none; }
+.pm-toggle .btn:active { transform:none; }
 
 @media (max-width:640px){
   .floating-add-news { bottom:1.1rem; right:1.1rem; width:3.25rem; height:3.25rem; font-size:1.4rem; }

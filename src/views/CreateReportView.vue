@@ -183,18 +183,57 @@
                 <div class="form-group">
                   <label class="form-label">Цена сдвинулась?</label>
                   <div class="pm-toggle">
-                    <button type="button" class="btn btn-outline btn-sm" :class="{ 'btn-success': news.priceMoved === true }" @click="news.priceMoved = true" :disabled="loading">Да</button>
-                    <button type="button" class="btn btn-outline btn-sm" :class="{ 'btn-danger': news.priceMoved === false }" @click="news.priceMoved = false" :disabled="loading">Нет</button>
-                    <button type="button" class="btn btn-outline btn-sm" :class="{ 'btn-gradient': news.priceMoved == null }" @click="news.priceMoved = undefined" :disabled="loading" title="Сброс">—</button>
+                    <!-- Когда активен вариант, не используем outline чтобы не перебивались CSS-переменные -->
+                    <button
+                      type="button"
+                      class="btn btn-sm"
+                      :class="news.priceMoved === true ? 'btn-success' : 'btn-outline'"
+                      @click="news.priceMoved = true"
+                      :disabled="loading"
+                    >Да</button>
+                    <button
+                      type="button"
+                      class="btn btn-sm"
+                      :class="news.priceMoved === false ? 'btn-danger' : 'btn-outline'"
+                      @click="news.priceMoved = false"
+                      :disabled="loading"
+                    >Нет</button>
+                    <button
+                      type="button"
+                      class="btn btn-sm"
+                      :class="news.priceMoved == null ? 'btn-gradient' : 'btn-outline'"
+                      @click="news.priceMoved = undefined"
+                      :disabled="loading"
+                      title="Сброс"
+                    >—</button>
                   </div>
                   <p class="form-hint">Отметьте, если после новости цена реально дернулась в прогнозируемом направлении</p>
                 </div>
                 <div class="form-group">
                   <label class="form-label">Без софта не взять?</label>
                   <div class="pm-toggle">
-                    <button type="button" class="btn btn-outline btn-sm" :class="{ 'btn-success': news.needsSoftware === true }" @click="news.needsSoftware = true" :disabled="loading">Да</button>
-                    <button type="button" class="btn btn-outline btn-sm" :class="{ 'btn-primary': news.needsSoftware === false }" @click="news.needsSoftware = false" :disabled="loading">Можно</button>
-                    <button type="button" class="btn btn-outline btn-sm" :class="{ 'btn-gradient': news.needsSoftware == null }" @click="news.needsSoftware = undefined" :disabled="loading" title="Сброс">—</button>
+                    <button
+                      type="button"
+                      class="btn btn-sm"
+                      :class="news.needsSoftware === true ? 'btn-success' : 'btn-outline'"
+                      @click="news.needsSoftware = true"
+                      :disabled="loading"
+                    >Да</button>
+                    <button
+                      type="button"
+                      class="btn btn-sm"
+                      :class="news.needsSoftware === false ? 'btn-primary' : 'btn-outline'"
+                      @click="news.needsSoftware = false"
+                      :disabled="loading"
+                    >Можно</button>
+                    <button
+                      type="button"
+                      class="btn btn-sm"
+                      :class="news.needsSoftware == null ? 'btn-gradient' : 'btn-outline'"
+                      @click="news.needsSoftware = undefined"
+                      :disabled="loading"
+                      title="Сброс"
+                    >—</button>
                   </div>
                   <p class="form-hint">Отметьте, если реализация требует спец. инструментов/софта</p>
                 </div>
@@ -605,4 +644,12 @@ function toLocalInputValue(d: Date): string {
 }
 
 .pm-toggle { display:flex; gap:.45rem; }
+/* Убираем анимации/плавности внутри группы переключателей, чтобы отклик был мгновенный */
+.pm-toggle .btn { 
+  transition: none !important; 
+  box-shadow: none !important; 
+}
+.pm-toggle .btn:before { display:none !important; }
+.pm-toggle .btn:hover { filter:none; }
+.pm-toggle .btn:active { transform:none; }
 </style>
