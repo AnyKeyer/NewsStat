@@ -30,7 +30,48 @@ class UserService {
       const response = await this.client.send(command)
       if (response.Body) {
         const usersData = await this.streamToString(response.Body)
-        return JSON.parse(usersData) as User[]
+        let users = [] as User[]
+        try {
+          users = JSON.parse(usersData) as User[]
+        } catch (e) {
+          console.warn('Не удалось распарсить users.json, пересоздаем из окружения')
+          users = this.getDefaultUsers()
+          await this.saveUsers(users)
+          return users
+        }
+
+        // Синхронизация: если в env заданы пользователи, но их нет в файле – добавим.
+        let changed = false
+        const adminUsername = import.meta.env.VITE_DEFAULT_ADMIN_USERNAME
+        const adminPassword = import.meta.env.VITE_DEFAULT_ADMIN_PASSWORD
+        if (adminUsername && adminPassword && !users.some(u => u.role === 'admin')) {
+          users.push({
+            id: 'admin-001',
+            username: adminUsername,
+            password: adminPassword,
+            displayName: 'Администратор',
+            isAuthenticated: false,
+            role: 'admin'
+          })
+          changed = true
+        }
+        const editorUsername = import.meta.env.VITE_DEFAULT_EDITOR_USERNAME
+        const editorPassword = import.meta.env.VITE_DEFAULT_EDITOR_PASSWORD
+        if (editorUsername && editorPassword && !users.some(u => u.role === 'editor')) {
+          users.push({
+            id: 'editor-001',
+            username: editorUsername,
+            password: editorPassword,
+            displayName: 'Редактор',
+            isAuthenticated: false,
+            role: 'editor'
+          })
+          changed = true
+        }
+        if (changed) {
+          await this.saveUsers(users)
+        }
+        return users
       }
     } catch (error) {
       console.log('Файл пользователей не найден, создаем дефолтных пользователей')
