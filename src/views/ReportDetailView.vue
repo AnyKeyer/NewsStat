@@ -39,29 +39,9 @@
         </div>
       </div>
 
-      <!-- Статистика -->
+      <!-- Статистика (карточка) -->
       <div v-if="statistics" class="statistics-section">
-        <h2>📊 Общая статистика</h2>
-        <div class="stats-grid">
-          <div class="stat-card">
-            <div class="stat-number">{{ statistics.totalNews }}</div>
-            <div class="stat-label">Всего новостей</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-number">{{ statistics.workingNews }}</div>
-            <div class="stat-label">Рабочих новостей</div>
-          </div>
-          <div class="stat-card positive">
-            <div class="stat-number">+{{ statistics.averageGrowth.toFixed(2) }}%</div>
-            <div class="stat-label">Средний рост</div>
-            <div class="stat-count">({{ statistics.positiveNewsCount }} новостей)</div>
-          </div>
-          <div class="stat-card negative">
-            <div class="stat-number">-{{ statistics.averageDecline.toFixed(2) }}%</div>
-            <div class="stat-label">Средний спад</div>
-            <div class="stat-count">({{ statistics.negativeNewsCount }} новостей)</div>
-          </div>
-        </div>
+        <ReportStatsCard :stats="statistics" subtitle="Сводка сигналов" />
       </div>
 
       <!-- Список новостей -->
@@ -135,6 +115,7 @@ import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useReportStore } from '@/stores/reports'
 import metaService from '@/services/metaService'
+import ReportStatsCard from '@/components/ReportStatsCard.vue'
 
 interface Props {
   id: string
@@ -270,52 +251,6 @@ onUnmounted(() => {
   margin-bottom: 3rem;
 }
 
-.statistics-section h2 {
-  color: var(--text-primary);
-  margin-bottom: 1.5rem;
-}
-
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1.5rem;
-}
-
-.stat-card {
-  background: var(--bg-secondary);
-  padding: 1.5rem;
-  border-radius: 0.75rem;
-  box-shadow: 0 2px 4px var(--shadow);
-  text-align: center;
-  border-left: 4px solid var(--accent);
-  border: 1px solid var(--border);
-}
-
-.stat-card.positive {
-  border-left-color: var(--success);
-}
-
-.stat-card.negative {
-  border-left-color: var(--danger);
-}
-
-.stat-number {
-  font-size: 2rem;
-  font-weight: bold;
-  color: var(--text-primary);
-  margin-bottom: 0.5rem;
-}
-
-.stat-label {
-  color: var(--text-secondary);
-  font-weight: 500;
-}
-
-.stat-count {
-  font-size: 0.75rem;
-  color: var(--text-muted);
-  margin-top: 0.25rem;
-}
 
 .news-section h2 {
   color: var(--text-primary);
