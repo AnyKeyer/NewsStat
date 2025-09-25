@@ -42,10 +42,14 @@ class R2Service {
   }
 
   async getReport(reportId: string): Promise<Report | null> {
-    const key = `reports/${reportId}.json`
+    // Добавляем временную метку как query-параметр к ключу для избежания потенциального кеширования прокси/браузером
+    // (Сам S3 API игнорирует query при определении объекта, но некоторые промежуточные слои могли кэшировать по URL)
+    const ts = Date.now()
+    const key = `reports/${reportId}.json?ts=${ts}`
     const command = new GetObjectCommand({
       Bucket: this.bucketName,
-      Key: key
+      // S3 ключ не должен содержать query параметров, поэтому передаем чистый путь
+      Key: key.split('?')[0]
     })
 
     try {
@@ -87,29 +91,30 @@ class R2Service {
 
       if (response.Contents && response.Contents.length > 0) {
         console.log(`Найдено ${response.Contents.length} файлов в R2`)
-        
-        for (const item of response.Contents) {
-          if (item.Key && item.Key.endsWith('.json')) {
-            const reportId = item.Key.replace('reports/', '').replace('.json', '')
-            console.log(`Загружаем отчет: ${reportId}`)
-            
+        const jsonKeys = response.Contents
+          .map(i => i.Key)
+          .filter((k): k is string => !!k && k.endsWith('.json'))
+        // Ограничиваем конкурентность чтобы не послать слишком много одновременных запросов
+        const concurrency = 6
+        let index = 0
+        const self = this
+        async function worker() {
+          while (index < jsonKeys.length) {
+            const my = index++
+            const keyFull = jsonKeys[my]
+            const reportId = keyFull.replace('reports/', '').replace('.json', '')
             try {
-              // Получаем краткую информацию о отчете
-              const report = await this.getReport(reportId)
+              const report = await self.getReport(reportId)
               if (report) {
-                reports.push({
-                  id: report.id,
-                  title: report.title,
-                  createdAt: report.createdAt
-                })
-                console.log(`Добавлен отчет: ${report.title}`)
+                reports.push({ id: report.id, title: report.title, createdAt: report.createdAt })
               }
             } catch (err) {
               console.error(`Ошибка загрузки отчета ${reportId}:`, err)
-              // Продолжаем загрузку других отчетов
             }
           }
         }
+        const workers = Array.from({ length: Math.min(concurrency, jsonKeys.length) }, () => worker())
+        await Promise.all(workers)
       } else {
         console.log('Файлы отчетов не найдены в R2')
       }

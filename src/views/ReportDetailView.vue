@@ -39,6 +39,7 @@
             <span v-if="report.createdBy" class="meta-item">
               👤 {{ report.createdBy }}
             </span>
+                  <span v-if="isStale" class="meta-item stale-indicator" title="Данные могли измениться – обновите отчет">⚠️ Есть более свежая версия</span>
           </div>
         </div>
         <div class="header-actions">
@@ -48,6 +49,7 @@
             :to="{ name: 'EditReport', params: { id: report.id } }"
             class="btn btn-primary edit-btn"
           >✏️ Редактировать</router-link>
+                <button type="button" class="btn btn-outline" @click="loadReport" :disabled="reportStore.loading" title="Принудительно перезагрузить">🔄</button>
         </div>
       </div>
 
@@ -226,6 +228,12 @@ const activeHashtag = ref<string | null>(null)
 
 const report = computed(() => reportStore.currentReport)
 const statistics = computed(() => reportStore.reportStatistics)
+// Простая эвристика: если updatedAt больше чем время последней локальной загрузки – показать предупреждение
+const lastLoadedAt = ref<number>(Date.now())
+const isStale = computed(() => {
+  if (!report.value?.updatedAt) return false
+  return report.value.updatedAt.getTime() > lastLoadedAt.value + 2000 // допуск 2с
+})
 
 const filteredNews = computed(() => {
   if (!report.value) return []
@@ -309,6 +317,7 @@ async function loadReport() {
   const reportId = props.id || route.params.id as string
   if (reportId) {
     await reportStore.loadReport(reportId)
+    lastLoadedAt.value = Date.now()
   }
 }
 
@@ -400,6 +409,7 @@ onUnmounted(() => {
   color: var(--text-muted);
   font-size: 0.875rem;
 }
+.stale-indicator { color: var(--warning); font-weight:600; }
 
 .statistics-section {
   margin-bottom: 3rem;

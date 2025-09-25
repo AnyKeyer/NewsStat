@@ -235,9 +235,9 @@ const isFormValid = computed(()=> newsItems.value.length>0 && newsItems.value.ev
 async function load() {
   loading.value = true
   try {
-    if (!reportStore.currentReport || reportStore.currentReport.id !== reportId) {
-      await reportStore.loadReport(reportId)
-    }
+    // Всегда перезагружаем отчет с сервера, даже если он уже в currentReport,
+    // чтобы избежать ситуации когда другой пользователь обновил данные, а локально осталась старая версия
+    await reportStore.loadReport(reportId)
     const rep = reportStore.currentReport
     if (!rep) throw new Error('Отчет не найден')
     title.value = rep.title
