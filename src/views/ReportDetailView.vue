@@ -148,9 +148,6 @@
 
               <div class="news-text">{{ newsItem.text }}</div>
 
-              <div v-if="newsItem.hashtags && newsItem.hashtags.length" class="news-hashtags">
-                <span v-for="h in newsItem.hashtags" :key="h" class="news-hashtag-chip" @click="activeHashtag = (activeHashtag===h? null : h)">#{{ h }}</span>
-              </div>
 
               <div v-if="newsItem.comment" class="news-comment">
                 <strong>Комментарий:</strong> {{ newsItem.comment }}
@@ -173,6 +170,20 @@
                   🔗 Источник
                 </a>
                 <span class="news-date" :title="isoString(newsItem.date)">{{ formatDateTime(newsItem.date) }}</span>
+              </div>
+              <div v-if="newsItem.hashtags && newsItem.hashtags.length" class="tags-section">
+                <span class="tags-label">Теги:</span>
+                <div class="tags-chips">
+                  <button
+                    v-for="h in newsItem.hashtags"
+                    :key="h"
+                    type="button"
+                    class="tag-chip"
+                    :class="{ active: activeHashtag === h.toLowerCase() }"
+                    @click="activeHashtag = (activeHashtag === h.toLowerCase() ? null : h.toLowerCase())"
+                    :title="activeHashtag === h.toLowerCase() ? 'Снять фильтр' : 'Фильтр по #' + h"
+                  >#{{ h }}</button>
+                </div>
               </div>
             </div>
           </div>
@@ -483,6 +494,38 @@ onUnmounted(() => {
 .news-hashtag-chip { background:var(--bg-tertiary); border:1px solid var(--border); padding:.25rem .55rem; font-size:.6rem; border-radius:1rem; cursor:pointer; color:var(--text-secondary); font-weight:600; letter-spacing:.4px; }
 .news-hashtag-chip:hover { background:var(--accent); color:#fff; border-color:var(--accent); }
 .news-hashtag-chip:active { transform:scale(.92); }
+/* Inline hashtags in header */
+/* Tags section at bottom of card */
+/* Refined simpler tags section */
+.tags-section { margin-top:.85rem; padding:.55rem .7rem .65rem; background:var(--bg-secondary); border:1px solid var(--border); border-radius:.65rem; display:flex; flex-wrap:wrap; gap:.6rem; align-items:flex-start; }
+.tags-label { font-size:.62rem; text-transform:uppercase; letter-spacing:.85px; font-weight:600; color:var(--text-muted); padding:.2rem .45rem; background:var(--bg-tertiary); border:1px solid var(--border); border-radius:.4rem; align-self:center; }
+.tags-chips { display:flex; flex-wrap:wrap; gap:.45rem; }
+.tag-chip { 
+  background:var(--bg-tertiary);
+  border:1px solid var(--border);
+  padding:.38rem .65rem .4rem;
+  font-size:.57rem;
+  border-radius:.9rem;
+  cursor:pointer;
+  color:var(--text-secondary);
+  font-weight:600;
+  letter-spacing:.5px;
+  line-height:1;
+  text-transform:uppercase;
+  display:inline-flex;
+  align-items:center;
+  gap:.25rem;
+  transition:.18s background,.18s color,.18s border-color,.18s transform;
+}
+.tag-chip:hover { background:var(--accent); color:#fff; border-color:var(--accent); }
+.tag-chip:active { transform:scale(.94); }
+.tag-chip.active { background:var(--accent); color:#fff; border-color:var(--accent); }
+.tag-chip.active::after { content:'×'; font-size:.65rem; margin-left:.15rem; opacity:.85; }
+.tag-chip:focus-visible { outline:none; box-shadow:0 0 0 2px rgba(255,255,255,0.85), 0 0 0 5px var(--accent); }
+@media (max-width:640px){
+  .tags-section { padding:.55rem .55rem .6rem; }
+  .tag-chip { font-size:.55rem; padding:.36rem .6rem .38rem; }
+}
 
 /* Extra links & screenshot */
 .extra-links { display:flex; gap:.6rem; flex-wrap:wrap; }
