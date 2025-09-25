@@ -27,7 +27,8 @@
     
     <!-- Модальное окно входа -->
     <div v-if="showLoginModal" class="modal-overlay" @click="closeLoginModal">
-      <div class="modal-content" @click.stop>
+      <div class="modal-positioner" @click.stop>
+        <div class="modal-content" @click.stop>
         <h2>Вход в систему</h2>
         <form @submit.prevent="handleLogin">
           <div class="form-group">
@@ -73,6 +74,7 @@
             </button>
           </div>
         </form>
+        </div>
       </div>
     </div>
   </header>
@@ -250,15 +252,20 @@ export default {
 
 .modal-overlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  inset: 0;
   background: rgba(0, 0, 0, 0.7);
-  display: flex;
-  align-items: center;
-  justify-content: center;
   z-index: 1000;
+  overflow-y: auto;
+  padding: 4.5rem 1rem 3rem; /* space from top so it не прилипает под хедер */
+}
+
+.modal-positioner { 
+  max-width: 520px; 
+  margin: 0 auto; 
+  display:flex; 
+  align-items:center; 
+  justify-content:center; 
+  min-height: calc(100vh - 7.5rem); 
 }
 
 .modal-content {
@@ -269,8 +276,8 @@ export default {
   border: 1px solid var(--border);
   max-width: 480px;
   width: 92%;
-  max-height: 90vh;
-  overflow-y: auto;
+  max-height: 88vh;
+  overflow-y: auto; /* internal scroll if very tall */
   position: relative;
 }
 .modal-content:before {
@@ -319,5 +326,8 @@ export default {
     flex-wrap: wrap;
     justify-content: center;
   }
+  .modal-overlay { padding: 5.5rem 1rem 2.5rem; }
+  .modal-positioner { min-height: calc(100vh - 8rem); }
+  .modal-content { padding: 1.6rem 1.4rem 1.7rem; }
 }
 </style>
