@@ -27,8 +27,7 @@
     
     <!-- Модальное окно входа -->
     <div v-if="showLoginModal" class="modal-overlay" @click="closeLoginModal">
-      <div class="modal-positioner" @click.stop>
-        <div class="modal-content" @click.stop>
+      <div class="modal-content" @click.stop>
         <h2>Вход в систему</h2>
         <form @submit.prevent="handleLogin">
           <div class="form-group">
@@ -74,14 +73,13 @@
             </button>
           </div>
         </form>
-        </div>
       </div>
     </div>
   </header>
 </template>
 
 <script setup lang="ts">
-import { ref, nextTick, computed, reactive } from 'vue'
+import { ref, nextTick, computed, reactive, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useRouter } from 'vue-router'
 import type { LoginCredentials } from '@/types'
@@ -120,6 +118,31 @@ function closeLoginModal() {
   loginForm.password = ''
   authStore.clearError()
 }
+
+// Body scroll lock & ESC handling
+function handleKey(e: KeyboardEvent) {
+  if (e.key === 'Escape' && showLoginModal.value) {
+    closeLoginModal()
+  }
+}
+
+onMounted(() => {
+  document.addEventListener('keydown', handleKey)
+})
+
+onBeforeUnmount(() => {
+  document.removeEventListener('keydown', handleKey)
+  // restore just in case
+  document.body.style.removeProperty('overflow')
+})
+
+watch(showLoginModal, (open: boolean) => {
+  if (open) {
+    document.body.style.overflow = 'hidden'
+  } else {
+    document.body.style.removeProperty('overflow')
+  }
+})
 
 async function handleLogin() {
   if (!isFormValid.value) return
@@ -250,23 +273,7 @@ export default {
   color: var(--text-secondary);
 }
 
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.7);
-  z-index: 1000;
-  overflow-y: auto;
-  padding: 4.5rem 1rem 3rem; /* space from top so it не прилипает под хедер */
-}
-
-.modal-positioner { 
-  max-width: 520px; 
-  margin: 0 auto; 
-  display:flex; 
-  align-items:center; 
-  justify-content:center; 
-  min-height: calc(100vh - 7.5rem); 
-}
+.modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,.7); z-index:1000; display:grid; place-items:center; padding:1.5rem .9rem; }
 
 .modal-content {
   background: linear-gradient(155deg, var(--bg-secondary) 0%, var(--bg-tertiary) 120%);
@@ -274,10 +281,9 @@ export default {
   border-radius: 1rem;
   box-shadow: 0 18px 40px -8px rgba(0,0,0,0.6), 0 2px 6px -1px rgba(0,0,0,0.5);
   border: 1px solid var(--border);
-  max-width: 480px;
-  width: 92%;
-  max-height: 88vh;
-  overflow-y: auto; /* internal scroll if very tall */
+  width: min(480px, 100% - 2rem);
+  max-height: calc(100vh - 3rem);
+  overflow-y:auto;
   position: relative;
 }
 .modal-content:before {
@@ -326,8 +332,7 @@ export default {
     flex-wrap: wrap;
     justify-content: center;
   }
-  .modal-overlay { padding: 5.5rem 1rem 2.5rem; }
-  .modal-positioner { min-height: calc(100vh - 8rem); }
-  .modal-content { padding: 1.6rem 1.4rem 1.7rem; }
+  .modal-overlay { padding:1.2rem .7rem; }
+  .modal-content { padding:1.55rem 1.3rem 1.6rem; max-height:calc(100vh - 2.4rem); }
 }
 </style>
