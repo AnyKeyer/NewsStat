@@ -168,6 +168,45 @@ class R2Service {
     
     throw new Error('Неподдерживаемый тип stream')
   }
+
+  // ===== Hashtags Index Handling =====
+  private hashtagIndexKey = 'indexes/hashtags.json'
+
+  async getHashtagIndex(): Promise<{ tags: string[]; updatedAt: string } | null> {
+    const command = new GetObjectCommand({ Bucket: this.bucketName, Key: this.hashtagIndexKey })
+    try {
+      const res = await this.client.send(command)
+      if (!res.Body) return null
+      const data = JSON.parse(await this.streamToString(res.Body))
+      if (!Array.isArray(data.tags)) return null
+      return data
+    } catch (e) {
+      // 404 или другая ошибка — возвращаем null, не падаем
+      return null
+    }
+  }
+
+  async putHashtagIndex(tags: string[]): Promise<void> {
+    const unique = Array.from(new Set(tags.map(t => t.toLowerCase()).filter(Boolean))).sort()
+    const command = new PutObjectCommand({
+      Bucket: this.bucketName,
+      Key: this.hashtagIndexKey,
+      Body: JSON.stringify({ tags: unique, updatedAt: new Date().toISOString() }, null, 2),
+      ContentType: 'application/json'
+    })
+    await this.client.send(command)
+  }
+
+  async mergeHashtags(incoming: string[]): Promise<string[]> {
+    if (!incoming.length) return (await this.getHashtagIndex())?.tags || []
+    const current = (await this.getHashtagIndex())?.tags || []
+    const merged = Array.from(new Set([...current, ...incoming.map(t => t.toLowerCase())].filter(Boolean))).sort()
+    // Только если реально появились новые — записываем
+    if (merged.length !== current.length) {
+      await this.putHashtagIndex(merged)
+    }
+    return merged
+  }
 }
 
 export default new R2Service()

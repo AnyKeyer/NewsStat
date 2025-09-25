@@ -12,6 +12,10 @@
 <script setup lang="ts">
 import AppHeader from '@/components/AppHeader.vue'
 import ToastContainer from '@/components/ToastContainer.vue'
+import { onMounted } from 'vue'
+import { useHashtagStore } from '@/stores/hashtags'
+const hashtagStore = useHashtagStore()
+onMounted(()=> { hashtagStore.syncFromRemote().catch(()=>{}) })
 </script>
 
 <style scoped>

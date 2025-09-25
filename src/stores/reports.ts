@@ -1,10 +1,12 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
+import { useHashtagStore } from '@/stores/hashtags'
 import type { Report, ReportStatistics } from '@/types'
 import r2Service from '@/services/r2Service'
 import { mockService } from '@/services/mockService'
 
 export const useReportStore = defineStore('reports', () => {
+  const hashtagStore = useHashtagStore()
   const reports = ref<Array<{ id: string; title: string; createdAt: Date }>>([])
   const currentReport = ref<Report | null>(null)
   const loading = ref(false)
@@ -80,6 +82,12 @@ export const useReportStore = defineStore('reports', () => {
       if (report) {
         currentReport.value = report
         console.log(`Отчет ${reportId} успешно загружен`)
+        // Синхронизируем хэштеги (локально и удаленно — без force merge, только локальный апдейт + фоновая синхронизация)
+        if (report.hashtagsCache && report.hashtagsCache.length) {
+          hashtagStore.add(report.hashtagsCache)
+          // не обязательно ждать, запускаем попытку мерджа
+          hashtagStore.mergeRemote(report.hashtagsCache)
+        }
       } else {
         error.value = 'Отчет не найден'
       }
@@ -109,6 +117,10 @@ export const useReportStore = defineStore('reports', () => {
       reports.value.unshift(reportSummary)
       currentReport.value = report
       console.log('Отчет успешно сохранен и добавлен в список')
+      if (report.hashtagsCache && report.hashtagsCache.length) {
+        hashtagStore.add(report.hashtagsCache)
+        hashtagStore.mergeRemote(report.hashtagsCache)
+      }
     } catch (err) {
       error.value = 'Не удалось сохранить отчет'
       console.error(err)
@@ -135,6 +147,10 @@ export const useReportStore = defineStore('reports', () => {
       }
       currentReport.value = updated
       console.log(`Отчет ${updated.id} обновлен`)
+      if (updated.hashtagsCache && updated.hashtagsCache.length) {
+        hashtagStore.add(updated.hashtagsCache)
+        hashtagStore.mergeRemote(updated.hashtagsCache)
+      }
     } catch (err) {
       error.value = 'Не удалось обновить отчет'
       console.error(err)

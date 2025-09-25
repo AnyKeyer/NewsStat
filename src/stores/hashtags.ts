@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
+import r2Service from '@/services/r2Service'
 import type { Report } from '@/types'
 
 // Простая нормализация: приводим к нижнему регистру, убираем ведущий # и пробелы
@@ -91,12 +92,82 @@ export const useHashtagStore = defineStore('hashtags', () => {
     if (changed) persist()
   }
 
+  // ===== Remote Sync (R2) =====
+  const remoteLoaded = ref(false)
+  const lastRemoteSync = ref<Date | null>(null)
+  const syncing = ref(false)
+
+  async function syncFromRemote(force = false) {
+    ensureLoadedFromLocalStorage()
+    if (syncing.value) return
+    if (!force && remoteLoaded.value && lastRemoteSync.value && Date.now() - lastRemoteSync.value.getTime() < 60_000) {
+      return // не чаще раза в минуту без force
+    }
+    syncing.value = true
+    try {
+      const idx = await r2Service.getHashtagIndex()
+      if (idx && Array.isArray(idx.tags)) {
+        let changed = false
+        for (const t of idx.tags) {
+          const n = normalize(t)
+          if (n && !tags.value.has(n)) { tags.value.add(n); changed = true }
+        }
+        if (changed) persist()
+        remoteLoaded.value = true
+        lastRemoteSync.value = new Date()
+      }
+    } finally {
+      syncing.value = false
+    }
+  }
+
+  async function mergeRemote(incoming: string[]) {
+    ensureLoadedFromLocalStorage()
+    if (!incoming.length) return
+    // локально добавим сразу
+    add(incoming)
+    try {
+      await r2Service.mergeHashtags(incoming)
+      lastRemoteSync.value = new Date()
+    } catch (e) {
+      console.warn('Не удалось слить хэштеги на сервер, останутся локально до следующей попытки', e)
+    }
+  }
+
+  // Полная пересборка (например аварийная) — принимает список отчетов
+  async function rebuildFromReports(reports: Report[]) {
+    tags.value.clear()
+    ingestReports(reports)
+    persist()
+    try {
+      await r2Service.putHashtagIndex(all.value)
+      lastRemoteSync.value = new Date()
+    } catch (e) {
+      console.error('Не удалось выгрузить полный индекс хэштегов', e)
+    }
+  }
+
   return {
     all,
     add,
     remove,
     clearAll,
     suggestions,
-    ingestReports
+    ingestReports,
+    syncFromRemote,
+    mergeRemote,
+    rebuildFromReports,
+    syncing,
+    lastRemoteSync
   }
 })
+
+// Dev helper (не ломает prod, просто навешивает глобал при наличии window)
+if (typeof window !== 'undefined') {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (window as any).__rebuildHashtags = async (reports: Report[]) => {
+    const store = useHashtagStore()
+    await store.rebuildFromReports(reports)
+    return store.all
+  }
+}
