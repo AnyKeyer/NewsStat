@@ -291,6 +291,7 @@
 
 <script setup lang="ts">
 import { computed, reactive, ref } from 'vue'
+import { useToastStore } from '@/stores/toasts'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useReportStore } from '@/stores/reports'
@@ -304,6 +305,7 @@ type LocalNewsItem = NewsItem & { dateLocal: string; hashtags: string[] }
 const router = useRouter()
 const authStore = useAuthStore()
 const reportStore = useReportStore()
+const toast = useToastStore()
 const hashtagStore = useHashtagStore()
 
 const loading = ref(false)
@@ -412,13 +414,16 @@ async function handleSubmit(): Promise<void> {
       hashtagsCache: Array.from(new Set(newsItems.value.flatMap(n => n.hashtags || []).map(h => h.toLowerCase()))).sort()
     }
 
-    await reportStore.saveReport(report)
+  await reportStore.saveReport(report)
+  toast.success('Отчет успешно создан')
     hashtagStore.add(report.hashtagsCache || [])
     
     // Перенаправляем на главную страницу где можно увидеть новый отчет
     router.push({ name: 'Home' })
   } catch (err) {
-    error.value = err instanceof Error ? err.message : 'Неизвестная ошибка'
+    const msg = err instanceof Error ? err.message : 'Неизвестная ошибка'
+    error.value = msg
+    toast.error('Ошибка создания: ' + msg)
   } finally {
     loading.value = false
   }

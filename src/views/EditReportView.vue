@@ -193,6 +193,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue'
+import { useToastStore } from '@/stores/toasts'
 import { useRoute, useRouter } from 'vue-router'
 import { useReportStore } from '@/stores/reports'
 import { useHashtagStore } from '@/stores/hashtags'
@@ -204,6 +205,7 @@ interface LocalNewsItem extends NewsItem { dateLocal: string; hashtags: string[]
 const route = useRoute()
 const router = useRouter()
 const reportStore = useReportStore()
+const toast = useToastStore()
 const hashtagStore = useHashtagStore()
 const reportId = route.params.id as string
 
@@ -281,11 +283,14 @@ async function handleSubmit() {
       hashtagsCache: Array.from(new Set(newsItems.value.flatMap(n => n.hashtags || []).map(h => h.toLowerCase()))).sort()
       // createdAt и createdBy не меняем
     }
-    await reportStore.updateReport(updated)
+  await reportStore.updateReport(updated)
+  toast.success('Отчет обновлен')
     hashtagStore.add(updated.hashtagsCache || [])
     router.push({ name: 'ReportDetail', params: { id: updated.id } })
   } catch(e:any) {
-    error.value = e.message || 'Не удалось обновить'
+    const msg = e?.message || 'Не удалось обновить'
+    error.value = msg
+    toast.error('Ошибка обновления: ' + msg)
   } finally { loading.value = false }
 }
 
