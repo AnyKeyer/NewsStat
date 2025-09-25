@@ -93,6 +93,23 @@
             Софт ({{ report.news.filter(n => n.needsSoftware === true).length }})
           </button>
         </div>
+        <div v-if="uniqueHashtags.length" class="hashtag-filter-bar">
+          <span class="hf-label">Хэштеги:</span>
+          <button
+            type="button"
+            class="hf-tag"
+            :class="{ active: activeHashtag === null }"
+            @click="activeHashtag = null"
+          >Все</button>
+          <button
+            v-for="tag in uniqueHashtags"
+            :key="tag"
+            type="button"
+            class="hf-tag"
+            :class="{ active: activeHashtag === tag }"
+            @click="activeHashtag = (activeHashtag === tag ? null : tag)"
+          >#{{ tag }}</button>
+        </div>
 
         <div class="news-list">
           <div
@@ -130,6 +147,10 @@
               </div>
 
               <div class="news-text">{{ newsItem.text }}</div>
+
+              <div v-if="newsItem.hashtags && newsItem.hashtags.length" class="news-hashtags">
+                <span v-for="h in newsItem.hashtags" :key="h" class="news-hashtag-chip" @click="activeHashtag = (activeHashtag===h? null : h)">#{{ h }}</span>
+              </div>
 
               <div v-if="newsItem.comment" class="news-comment">
                 <strong>Комментарий:</strong> {{ newsItem.comment }}
@@ -190,24 +211,29 @@ const reportStore = useReportStore()
 const authStore = useAuthStore()
 
 const newsFilter = ref<'all' | 'moved' | 'static' | 'unmarked' | 'software'>('all')
+const activeHashtag = ref<string | null>(null)
 
 const report = computed(() => reportStore.currentReport)
 const statistics = computed(() => reportStore.reportStatistics)
 
 const filteredNews = computed(() => {
   if (!report.value) return []
+  let base = report.value.news
   switch (newsFilter.value) {
-    case 'moved':
-      return report.value.news.filter(n => n.priceMoved === true)
-    case 'static':
-      return report.value.news.filter(n => n.priceMoved === false)
-    case 'unmarked':
-      return report.value.news.filter(n => n.priceMoved === undefined)
-    case 'software':
-      return report.value.news.filter(n => n.needsSoftware === true)
-    default:
-      return report.value.news
+    case 'moved': base = base.filter(n => n.priceMoved === true); break
+    case 'static': base = base.filter(n => n.priceMoved === false); break
+    case 'unmarked': base = base.filter(n => n.priceMoved === undefined); break
+    case 'software': base = base.filter(n => n.needsSoftware === true); break
   }
+  if (activeHashtag.value) {
+    base = base.filter(n => (n.hashtags||[]).map(h=>h.toLowerCase()).includes(activeHashtag.value as string))
+  }
+  return base
+})
+
+const uniqueHashtags = computed(() => {
+  if (!report.value) return []
+  return Array.from(new Set(report.value.news.flatMap(n => (n.hashtags||[]).map(h=> h.toLowerCase())))).sort()
 })
 
 function impactClass(n: { impact: number }) {
@@ -445,6 +471,18 @@ onUnmounted(() => {
 .news-link { color:var(--accent); font-weight:500; text-decoration:none; }
 .news-link:hover { text-decoration:underline; }
 .news-date { color:var(--text-muted); font-size:.7rem; letter-spacing:.5px; text-transform:uppercase; }
+
+/* Hashtag filtering */
+.hashtag-filter-bar { display:flex; flex-wrap:wrap; gap:.4rem; margin:-.5rem 0 1.5rem; align-items:center; }
+.hf-label { font-size:.7rem; text-transform:uppercase; letter-spacing:.7px; color:var(--text-muted); margin-right:.25rem; }
+.hf-tag { background:var(--bg-tertiary); border:1px solid var(--border); color:var(--text-secondary); font-size:.65rem; padding:.4rem .7rem; border-radius:1rem; cursor:pointer; font-weight:600; letter-spacing:.4px; }
+.hf-tag.active { background:var(--accent); color:#fff; border-color:var(--accent); box-shadow:0 2px 8px -2px rgba(0,0,0,.5); }
+.hf-tag:hover { background:var(--accent); color:#fff; border-color:var(--accent); }
+
+.news-hashtags { display:flex; flex-wrap:wrap; gap:.35rem; margin-top:.15rem; }
+.news-hashtag-chip { background:var(--bg-tertiary); border:1px solid var(--border); padding:.25rem .55rem; font-size:.6rem; border-radius:1rem; cursor:pointer; color:var(--text-secondary); font-weight:600; letter-spacing:.4px; }
+.news-hashtag-chip:hover { background:var(--accent); color:#fff; border-color:var(--accent); }
+.news-hashtag-chip:active { transform:scale(.92); }
 
 /* Extra links & screenshot */
 .extra-links { display:flex; gap:.6rem; flex-wrap:wrap; }

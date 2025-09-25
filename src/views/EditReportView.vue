@@ -62,6 +62,17 @@
                 <label class="form-label">Комментарий</label>
                 <textarea v-model="news.comment" rows="2" class="form-input" :disabled="loading"></textarea>
               </div>
+              <div class="form-group">
+                <label class="form-label">Хэштеги</label>
+                <HashtagInput
+                  ref="setHashtagRef(index)"
+                  v-model="news.hashtags"
+                  :all="hashtagStore.all"
+                  placeholder="Добавьте хэштег и нажмите Enter (пример: trend, etf, regulation)"
+                  @added="(t)=>hashtagStore.add(t)"
+                />
+                <p class="form-hint">Короткие ключевые слова без #. Примеры: macro, sec, hack, listing, regulation.</p>
+              </div>
               <div class="form-row">
                 <div class="form-group">
                   <label class="form-label">Ссылка на страницу токена</label>
@@ -184,13 +195,16 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useReportStore } from '@/stores/reports'
+import { useHashtagStore } from '@/stores/hashtags'
 import type { Report, NewsItem } from '@/types'
+import HashtagInput from '@/components/HashtagInput.vue'
 
-interface LocalNewsItem extends NewsItem { dateLocal: string }
+interface LocalNewsItem extends NewsItem { dateLocal: string; hashtags: string[] }
 
 const route = useRoute()
 const router = useRouter()
 const reportStore = useReportStore()
+const hashtagStore = useHashtagStore()
 const reportId = route.params.id as string
 
 const loading = ref(false)
@@ -199,6 +213,8 @@ const loaded = ref(false)
 const title = ref('')
 const reportForm = reactive({ description: '' })
 const newsItems = ref<LocalNewsItem[]>([])
+const hashtagComponents = ref<any[]>([])
+function setHashtagRef(index:number){ return (el:any)=> { hashtagComponents.value[index] = el } }
 
 function toLocalInputValue(d: Date): string {
   const y = d.getFullYear(); const m = String(d.getMonth()+1).padStart(2,'0'); const da = String(d.getDate()).padStart(2,'0'); const h = String(d.getHours()).padStart(2,'0'); const mi = String(d.getMinutes()).padStart(2,'0');
@@ -208,7 +224,7 @@ function toLocalInputValue(d: Date): string {
 function generateId(): string { return Date.now().toString(36) + Math.random().toString(36).slice(2) }
 
 function addNews() {
-  newsItems.value.push({ id: generateId(), title:'', text:'', url:'', tokenName:'', tokenUrl:'', screenshotUrl:'', comment:'', impact:0, date:new Date(), priceMoved: undefined, needsSoftware: undefined, dateLocal: toLocalInputValue(new Date()) })
+  newsItems.value.push({ id: generateId(), title:'', text:'', url:'', tokenName:'', tokenUrl:'', screenshotUrl:'', comment:'', impact:0, date:new Date(), priceMoved: undefined, needsSoftware: undefined, dateLocal: toLocalInputValue(new Date()), hashtags: [] })
 }
 function removeNews(i:number){ newsItems.value.splice(i,1) }
 
@@ -224,7 +240,9 @@ async function load() {
     if (!rep) throw new Error('Отчет не найден')
     title.value = rep.title
     reportForm.description = rep.description || ''
-  newsItems.value = rep.news.map(n => ({ ...n, dateLocal: toLocalInputValue(new Date(n.date)), needsSoftware: n.needsSoftware }))
+  newsItems.value = rep.news.map(n => ({ ...n, dateLocal: toLocalInputValue(new Date(n.date)), needsSoftware: n.needsSoftware, hashtags: (n.hashtags||[]).map(h=>h.toLowerCase()) }))
+  // Инжектим в глобальный стор
+  hashtagStore.add(rep.news.flatMap(n => n.hashtags || []))
     loaded.value = true
   } catch(e:any) {
     error.value = e.message || 'Ошибка загрузки'
@@ -242,6 +260,9 @@ async function handleSubmit() {
       ...existing,
       title: title.value.trim() || existing.title,
       description: reportForm.description.trim() || undefined,
+      // Перед маппингом коммитим драфты
+      // (если пользователь сразу нажал "Сохранить" не подтвердив последний ввод)
+      ...(hashtagComponents.value.forEach(c => { try { c?.commit?.() } catch(_) {} }), {}),
       news: newsItems.value.map(n => ({
         id: n.id,
         title: n.title.trim(),
@@ -254,11 +275,14 @@ async function handleSubmit() {
         impact: n.impact,
         date: new Date(n.dateLocal),
         priceMoved: n.priceMoved,
-        needsSoftware: n.needsSoftware
+        needsSoftware: n.needsSoftware,
+        hashtags: (n.hashtags||[]).map(h => h.toLowerCase())
       })),
+      hashtagsCache: Array.from(new Set(newsItems.value.flatMap(n => n.hashtags || []).map(h => h.toLowerCase()))).sort()
       // createdAt и createdBy не меняем
     }
     await reportStore.updateReport(updated)
+    hashtagStore.add(updated.hashtagsCache || [])
     router.push({ name: 'ReportDetail', params: { id: updated.id } })
   } catch(e:any) {
     error.value = e.message || 'Не удалось обновить'

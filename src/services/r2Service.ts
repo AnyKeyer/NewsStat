@@ -62,6 +62,9 @@ class R2Service {
         report.news.forEach(news => {
           news.date = new Date(news.date)
         })
+        if (!report.hashtagsCache) {
+          report.hashtagsCache = Array.from(new Set(report.news.flatMap(n => (n.hashtags||[]).map(h => h.toLowerCase())))).sort()
+        }
         
         return report
       }

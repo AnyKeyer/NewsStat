@@ -15,6 +15,8 @@ export interface NewsItem {
   priceMoved?: boolean
   /** Нужен специализированный софт / инструменты чтобы воспользоваться ситуацией ("без софта не взять") */
   needsSoftware?: boolean
+  /** Хэштеги связанные с новостью (без символа #, храним в нижнем регистре для унификации отображение можно делать в верхнем) */
+  hashtags?: string[]
 }
 
 export interface Report {
@@ -25,6 +27,8 @@ export interface Report {
   createdAt: Date
   createdBy?: string
   updatedAt?: Date
+  /** Опционально кэш уникальных хэштегов (может быть заполнен при сохранении для ускорения фильтрации). Не обязателен для старых отчетов. */
+  hashtagsCache?: string[]
 }
 
 export interface ReportStatistics {

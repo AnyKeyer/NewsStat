@@ -168,6 +168,18 @@
                 ></textarea>
               </div>
 
+              <div class="form-group">
+                <label class="form-label">Хэштеги</label>
+                <HashtagInput
+                  ref="setHashtagRef(index)"
+                  v-model="news.hashtags"
+                  :all="hashtagStore.all"
+                  placeholder="Добавьте хэштег и нажмите Enter (пример: trend, etf, regulation)"
+                  @added="(t)=>hashtagStore.add(t)"
+                />
+                <p class="form-hint">Используйте короткие тематические теги. Хранится без символа #. Примеры: etf, sec, pump, dump, macro, defi.</p>
+              </div>
+
               <div class="form-row">
                 <div class="form-group">
                   <label class="form-label">Время появления (локальное)*</label>
@@ -282,14 +294,17 @@ import { computed, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useReportStore } from '@/stores/reports'
+import { useHashtagStore } from '@/stores/hashtags'
 import type { Report, NewsItem } from '@/types'
+import HashtagInput from '@/components/HashtagInput.vue'
 
 // Локальный тип с дополнительным полем dateLocal (строка для input datetime-local)
-type LocalNewsItem = NewsItem & { dateLocal: string }
+type LocalNewsItem = NewsItem & { dateLocal: string; hashtags: string[] }
 
 const router = useRouter()
 const authStore = useAuthStore()
 const reportStore = useReportStore()
+const hashtagStore = useHashtagStore()
 
 const loading = ref(false)
 const error = ref<string | null>(null)
@@ -299,6 +314,11 @@ const reportForm = reactive({
 })
 
 const newsItems = ref<LocalNewsItem[]>([])
+// refs на компоненты хэштегов
+const hashtagComponents = ref<any[]>([])
+function setHashtagRef(index: number) {
+  return (el: any) => { hashtagComponents.value[index] = el }
+}
 
 const isFormValid = computed(() => {
   return (
@@ -345,7 +365,8 @@ function addNews(): void {
     date: now,
     priceMoved: undefined,
     needsSoftware: undefined,
-    dateLocal: toLocalInputValue(now)
+    dateLocal: toLocalInputValue(now),
+    hashtags: []
   })
 }
 
@@ -360,6 +381,8 @@ async function handleSubmit(): Promise<void> {
   error.value = null
 
   try {
+    // Принудительно коммитим несохраненный draft во всех компонентах хэштегов (если пользователь не нажал Enter)
+    hashtagComponents.value.forEach(c => { try { c?.commit?.() } catch(_) {} })
     const report: Report = {
       id: generateId(),
       title: generateReportTitle(),
@@ -379,15 +402,18 @@ async function handleSubmit(): Promise<void> {
             impact: n.impact,
             date,
             priceMoved: n.priceMoved,
-            needsSoftware: n.needsSoftware
+            needsSoftware: n.needsSoftware,
+            hashtags: n.hashtags?.map(h => h.trim().toLowerCase()).filter(Boolean) || []
         }
       }),
       createdAt: new Date(),
       updatedAt: new Date(),
-      createdBy: authStore.user?.displayName || authStore.user?.username
+      createdBy: authStore.user?.displayName || authStore.user?.username,
+      hashtagsCache: Array.from(new Set(newsItems.value.flatMap(n => n.hashtags || []).map(h => h.toLowerCase()))).sort()
     }
 
     await reportStore.saveReport(report)
+    hashtagStore.add(report.hashtagsCache || [])
     
     // Перенаправляем на главную страницу где можно увидеть новый отчет
     router.push({ name: 'Home' })

@@ -69,7 +69,9 @@ class MockService {
       news: report.news.map((news: any) => ({
         ...news,
         date: new Date(news.date)
-      }))
+      })),
+      // Если раньше не было hashtagsCache - построим на лету
+      hashtagsCache: Array.isArray(report.hashtagsCache) ? report.hashtagsCache : Array.from(new Set((report.news||[]).flatMap((n:any)=> (n.hashtags||[]).map((h:string)=> String(h).toLowerCase())))).sort()
     }))
   }
 
