@@ -26,9 +26,11 @@
     </div>
     
     <!-- Модальное окно входа -->
-    <div v-if="showLoginModal" class="modal-overlay" @click="closeLoginModal">
-      <div class="modal-content" @click.stop>
-        <h2>Вход в систему</h2>
+    <teleport to="body">
+      <div v-if="showLoginModal" class="login-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="login-modal-title" @click="closeLoginModal">
+        <div class="login-modal" @click.stop>
+          <button type="button" class="login-modal-close" aria-label="Закрыть" @click="closeLoginModal">×</button>
+          <h2 id="login-modal-title">Вход в систему</h2>
         <form @submit.prevent="handleLogin">
           <div class="form-group">
             <label for="username" class="form-label">Логин</label>
@@ -73,8 +75,9 @@
             </button>
           </div>
         </form>
+        </div>
       </div>
-    </div>
+    </teleport>
   </header>
 </template>
 
@@ -273,35 +276,14 @@ export default {
   color: var(--text-secondary);
 }
 
-.modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,.7); z-index:1000; display:grid; place-items:center; padding:1.5rem .9rem; }
-
-.modal-content {
-  background: linear-gradient(155deg, var(--bg-secondary) 0%, var(--bg-tertiary) 120%);
-  padding: 2rem 2.1rem 2.1rem;
-  border-radius: 1rem;
-  box-shadow: 0 18px 40px -8px rgba(0,0,0,0.6), 0 2px 6px -1px rgba(0,0,0,0.5);
-  border: 1px solid var(--border);
-  width: min(480px, 100% - 2rem);
-  max-height: calc(100vh - 3rem);
-  overflow-y:auto;
-  position: relative;
-}
-.modal-content:before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(145deg, rgba(255,255,255,0.05), rgba(255,255,255,0));
-  pointer-events: none;
-}
-
-.modal-content h2 {
-  margin-bottom: 1.25rem;
-  color: var(--text-primary);
-  text-align: center;
-  font-size: 1.35rem;
-  letter-spacing: .5px;
-  font-weight: 600;
-}
+.login-modal-overlay { position:fixed; inset:0; background:rgba(15,23,42,0.78); backdrop-filter:blur(10px) saturate(140%); -webkit-backdrop-filter:blur(10px) saturate(140%); z-index:1000; display:flex; align-items:center; justify-content:center; padding:clamp(1rem,2.5vh,2rem) .9rem; animation: fadeIn .25s ease; }
+.login-modal { position:relative; background:linear-gradient(155deg,var(--bg-secondary) 0%, var(--bg-tertiary) 115%); border:1px solid var(--border); width:min(480px,100% - 2rem); max-height:calc(100vh - clamp(2.2rem,5vh,4rem)); border-radius:1rem; box-shadow:0 16px 38px -10px rgba(0,0,0,.65),0 3px 8px -2px rgba(0,0,0,.5); padding:2rem 2.1rem 2.15rem; overflow-y:auto; animation:modalIn .28s cubic-bezier(.4,.14,.3,1); }
+.login-modal:before { content:''; position:absolute; inset:0; background:linear-gradient(145deg,rgba(255,255,255,0.05),rgba(255,255,255,0)); pointer-events:none; }
+.login-modal h2 { margin:0 0 1.15rem; color:var(--text-primary); text-align:center; font-size:1.35rem; letter-spacing:.5px; font-weight:600; }
+.login-modal-close { position:absolute; top:.55rem; right:.6rem; width:2.1rem; height:2.1rem; border-radius:.65rem; border:1px solid var(--border); background:var(--bg-tertiary); color:var(--text-secondary); font-size:1.1rem; line-height:1; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:.2s background,.2s color,.25s box-shadow; }
+.login-modal-close:hover { background:var(--accent); color:#fff; border-color:var(--accent); box-shadow:0 6px 14px -4px rgba(0,0,0,.55); }
+.login-modal-close:focus-visible { outline:none; box-shadow:0 0 0 3px rgba(255,255,255,0.85),0 0 0 6px var(--accent); }
+@keyframes modalIn { from { opacity:0; transform:translateY(14px) scale(.96);} to { opacity:1; transform:translateY(0) scale(1);} }
 
 .error-text {
   color: var(--danger);
@@ -332,7 +314,6 @@ export default {
     flex-wrap: wrap;
     justify-content: center;
   }
-  .modal-overlay { padding:1.2rem .7rem; }
-  .modal-content { padding:1.55rem 1.3rem 1.6rem; max-height:calc(100vh - 2.4rem); }
+  .login-modal { padding:1.65rem 1.4rem 1.7rem; max-height:calc(100vh - 2.2rem); }
 }
 </style>
