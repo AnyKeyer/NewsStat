@@ -3,6 +3,28 @@
     <div class="header-section">
       <h1>📊 Отчеты анализа новостей</h1>
       <p>Анализ влияния новостей на криптовалютные токены</p>
+      <div class="quick-check">
+        <input v-model="quickUrl" type="url" class="qc-input" placeholder="Быстрая проверка: вставьте ссылку на новость" @input="debouncedQuickCheck" />
+        <div class="qc-status" v-if="qc.state !== 'idle'" :class="qc.state">
+          <template v-if="qc.state==='empty'">Введите ссылку</template>
+          <template v-else-if="qc.state==='checking'">⏳ Проверяем...</template>
+          <template v-else-if="qc.state==='unique'">✅ Уникальна</template>
+          <template v-else-if="qc.state==='duplicate'">
+            ⚠️ {{ qc.matches.length }} совп.
+            <div class="qc-pop">
+              <strong>Найдено ранее:</strong>
+              <ul>
+                <li v-for="m in qc.matches" :key="m.newsId" @click.stop="goReport(m.reportId)">
+                  <span class="t">{{ m.newsTitle || 'Без заголовка' }}</span>
+                  <span class="r">в отчете «{{ m.reportTitle || m.reportId }}»</span>
+                  <span class="d">{{ new Date(m.date).toLocaleString() }}</span>
+                </li>
+              </ul>
+            </div>
+          </template>
+          <template v-else-if="qc.state==='error'">Ошибка</template>
+        </div>
+      </div>
       <button @click="loadReports" class="btn btn-secondary" style="margin-top: 1rem;">
         🔄 Обновить список
       </button>
@@ -145,6 +167,7 @@ import { useRouter } from 'vue-router'
 import { useReportStore } from '@/stores/reports'
 import { useAuthStore } from '@/stores/auth'
 import metaService from '@/services/metaService'
+import r2Service from '@/services/r2Service'
 import type { ReportStatistics } from '@/types'
 
 interface DateGroup {
@@ -386,6 +409,27 @@ onActivated(() => {
   // Сбрасываем мета-теги на дефолтные
   metaService.resetToDefault()
 })
+
+// ===== Быстрая проверка новости по URL =====
+const quickUrl = ref('')
+interface QCState { state: 'idle' | 'empty' | 'checking' | 'unique' | 'duplicate' | 'error'; matches: any[] }
+const qc = ref<QCState>({ state: 'idle', matches: [] })
+let qcTimer: any = null
+function debouncedQuickCheck() {
+  if (qcTimer) clearTimeout(qcTimer)
+  const v = quickUrl.value.trim()
+  if (!v) { qc.value = { state: 'empty', matches: [] }; return }
+  qc.value = { state: 'checking', matches: [] }
+  qcTimer = setTimeout(async () => {
+    try {
+      const matches = await r2Service.findUrlDuplicates(v)
+      qc.value = matches.length ? { state: 'duplicate', matches } : { state: 'unique', matches: [] }
+    } catch (e) {
+      qc.value = { state: 'error', matches: [] }
+    }
+  }, 400)
+}
+function goReport(id: string) { router.push({ name: 'ReportDetail', params: { id } }) }
 </script>
 
 <style scoped>
@@ -404,6 +448,24 @@ onActivated(() => {
   color: var(--text-secondary);
   font-size: 1.125rem;
 }
+/* Quick check styles */
+.quick-check { margin:1.25rem auto 0; display:flex; gap:.75rem; justify-content:center; align-items:stretch; max-width:900px; }
+.quick-check .qc-input { flex:1; padding:.8rem 1rem; border:2px solid var(--border); background:var(--bg-tertiary); color:var(--text-primary); border-radius:.65rem; font-size:.95rem; }
+.quick-check .qc-input:focus { outline:none; border-color:var(--primary); box-shadow:0 0 0 3px rgba(99,102,241,0.25); }
+.qc-status { position:relative; font-size:.75rem; font-weight:600; padding:.55rem .8rem; border-radius:.55rem; background:var(--bg-secondary); color:var(--text-secondary); min-width:120px; display:flex; align-items:center; justify-content:center; }
+.qc-status.checking { background:#1e2734; color:#60a5fa; }
+.qc-status.unique { background:#173d22; color:#4ade80; }
+.qc-status.duplicate { background:#40210e; color:#fbbf24; cursor:pointer; }
+.qc-status.error { background:#3f141a; color:#f87171; }
+.qc-status.empty { background:var(--bg-tertiary); color:var(--text-muted); }
+.qc-status .qc-pop { display:none; position:absolute; top:110%; right:0; background:var(--bg-secondary); padding:.75rem .9rem; border-radius:.6rem; width:340px; box-shadow:0 10px 26px rgba(0,0,0,.5); z-index:50; font-size:.7rem; text-align:left; }
+.qc-status.duplicate:hover .qc-pop { display:block; }
+.qc-status .qc-pop ul { list-style:none; padding:0; margin:.5rem 0 0; max-height:210px; overflow:auto; display:flex; flex-direction:column; gap:.45rem; }
+.qc-status .qc-pop li { display:flex; flex-direction:column; background:var(--bg-tertiary); padding:.45rem; border-radius:.45rem; transition:background .15s; cursor:pointer; }
+.qc-status .qc-pop li:hover { background:var(--bg-secondary); }
+.qc-status .qc-pop li .t { color:var(--text-primary); font-weight:500; }
+.qc-status .qc-pop li .r { color:var(--text-secondary); font-size:.65rem; }
+.qc-status .qc-pop li .d { color:var(--text-muted); font-size:.6rem; }
 
 .loading-state {
   text-align: center;

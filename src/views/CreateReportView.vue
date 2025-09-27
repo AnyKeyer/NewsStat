@@ -134,14 +134,35 @@
               <div class="form-row">
                 <div class="form-group">
                   <label class="form-label">Ссылка на новость *</label>
-                  <input
-                    v-model="news.url"
-                    type="url"
-                    class="form-input"
-                    placeholder="https://example.com/news"
-                    required
-                    :disabled="loading"
-                  />
+                  <div class="url-dup-wrapper">
+                    <input
+                      v-model="news.url"
+                      type="url"
+                      class="form-input"
+                      placeholder="https://example.com/news"
+                      required
+                      :disabled="loading"
+                      @input="triggerDuplicateCheck(news)"
+                    />
+                    <div class="dup-badge" v-if="dupStatus[news.id]" :class="dupStatus[news.id].state">
+                      <template v-if="dupStatus[news.id].state==='checking'">⏳</template>
+                      <template v-else-if="dupStatus[news.id].state==='unique'">✅ Уникальна</template>
+                      <template v-else-if="dupStatus[news.id].state==='duplicate'">
+                        ⚠️ {{ dupStatus[news.id].matches.length }} дублик.
+                        <span class="dup-pop" v-if="dupStatus[news.id].matches.length">
+                          <strong>Найдены ранее:</strong>
+                          <ul>
+                            <li v-for="m in dupStatus[news.id].matches" :key="m.newsId">
+                              <span class="t">{{ m.newsTitle || 'Без заголовка' }}</span>
+                              <span class="r">в отчете «{{ m.reportTitle || m.reportId }}»</span>
+                              <span class="d">{{ new Date(m.date).toLocaleString() }}</span>
+                            </li>
+                          </ul>
+                        </span>
+                      </template>
+                      <template v-else-if="dupStatus[news.id].state==='error'">⚠️ Ошибка</template>
+                    </div>
+                  </div>
                 </div>
                 <div class="form-group">
                   <label class="form-label">Влияние на токен (%) *</label>
@@ -298,6 +319,7 @@ import { useReportStore } from '@/stores/reports'
 import { useHashtagStore } from '@/stores/hashtags'
 import type { Report, NewsItem } from '@/types'
 import HashtagInput from '@/components/HashtagInput.vue'
+import r2Service from '@/services/r2Service'
 
 // Локальный тип с дополнительным полем dateLocal (строка для input datetime-local)
 type LocalNewsItem = NewsItem & { dateLocal: string; hashtags: string[] }
@@ -316,6 +338,31 @@ const reportForm = reactive({
 })
 
 const newsItems = ref<LocalNewsItem[]>([])
+// duplicate status map (per news id)
+interface DupStatus { state: 'checking' | 'unique' | 'duplicate' | 'error'; matches: any[] }
+const dupStatus = reactive<Record<string, DupStatus>>({})
+let dupTimers: Record<string, any> = {}
+
+function triggerDuplicateCheck(news: LocalNewsItem) {
+  if (dupTimers[news.id]) clearTimeout(dupTimers[news.id])
+  if (!news.url || !news.url.trim()) {
+    delete dupStatus[news.id]
+    return
+  }
+  dupStatus[news.id] = { state: 'checking', matches: [] }
+  dupTimers[news.id] = setTimeout(async () => {
+    try {
+      const matches = await r2Service.findUrlDuplicates(news.url.trim())
+      if (!matches.length) {
+        dupStatus[news.id] = { state: 'unique', matches: [] }
+      } else {
+        dupStatus[news.id] = { state: 'duplicate', matches }
+      }
+    } catch (e) {
+      dupStatus[news.id] = { state: 'error', matches: [] }
+    }
+  }, 450)
+}
 // refs на компоненты хэштегов
 const hashtagComponents = ref<any[]>([])
 function setHashtagRef(index: number) {
@@ -683,4 +730,18 @@ function toLocalInputValue(d: Date): string {
 .pm-toggle .btn:before { display:none !important; }
 .pm-toggle .btn:hover { filter:none; }
 .pm-toggle .btn:active { transform:none; }
+/* Duplicate badge styles */
+.url-dup-wrapper { position: relative; }
+.dup-badge { position:absolute; top:50%; right:0.5rem; transform:translateY(-50%); font-size:0.7rem; font-weight:600; padding:0.25rem 0.45rem; border-radius:0.4rem; background:var(--bg-secondary); color:var(--text-secondary); cursor:default; line-height:1; display:flex; align-items:center; gap:.25rem; }
+.dup-badge.unique { background: #173d22; color:#4ade80; box-shadow:0 0 0 1px #1f5c30; }
+.dup-badge.duplicate { background:#40210e; color:#fbbf24; box-shadow:0 0 0 1px #8a5211; }
+.dup-badge.checking { background:#1e2734; color:#60a5fa; box-shadow:0 0 0 1px #1d4ed8; }
+.dup-badge.error { background:#3f141a; color:#f87171; box-shadow:0 0 0 1px #991b1b; }
+.dup-badge .dup-pop { display:none; position:absolute; top:110%; right:0; background:var(--bg-secondary); padding:.6rem .75rem; border-radius:.5rem; width:280px; z-index:30; box-shadow:0 6px 18px rgba(0,0,0,.45); font-size:.7rem; line-height:1.2; }
+.dup-badge.duplicate:hover .dup-pop { display:block; }
+.dup-badge .dup-pop ul { list-style:none; padding:0; margin:.4rem 0 0; max-height:180px; overflow:auto; display:flex; flex-direction:column; gap:.4rem; }
+.dup-badge .dup-pop li { display:flex; flex-direction:column; background:var(--bg-tertiary); padding:.4rem; border-radius:.4rem; }
+.dup-badge .dup-pop li .t { color:var(--text-primary); font-weight:500; }
+.dup-badge .dup-pop li .r { color:var(--text-secondary); font-size:.65rem; }
+.dup-badge .dup-pop li .d { color:var(--text-muted); font-size:.6rem; }
 </style>

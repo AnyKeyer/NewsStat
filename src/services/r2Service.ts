@@ -1,5 +1,5 @@
 import { S3Client, GetObjectCommand, PutObjectCommand, DeleteObjectCommand, ListObjectsV2Command } from '@aws-sdk/client-s3'
-import type { Report } from '@/types'
+import type { Report, NewsUrlIndexEntry } from '@/types'
 
 class R2Service {
   private client: S3Client
@@ -206,6 +206,111 @@ class R2Service {
       await this.putHashtagIndex(merged)
     }
     return merged
+  }
+
+  // ===== News URL Duplicate Index =====
+  private newsUrlIndexKey = 'indexes/news-urls.json'
+
+  private normalizeUrl(raw: string): string {
+    try {
+      const u = new URL(raw.trim())
+      u.hash = ''
+      // Удаляем мусорные параметры отслеживания
+      const paramsToStrip = ['utm_source','utm_medium','utm_campaign','utm_term','utm_content','ref','ref_src','gclid','fbclid']
+      paramsToStrip.forEach(p => u.searchParams.delete(p))
+      // Сортируем параметры для стабильности
+      const entries = Array.from(u.searchParams.entries()).sort(([a],[b]) => a.localeCompare(b))
+      u.search = entries.length ? '?' + entries.map(([k,v]) => `${k}=${v}`).join('&') : ''
+      // Удаляем завершающий слеш кроме корня
+      if (u.pathname.endsWith('/') && u.pathname !== '/') {
+        u.pathname = u.pathname.slice(0, -1)
+      }
+      return u.toString().toLowerCase()
+    } catch {
+      return raw.trim().toLowerCase()
+    }
+  }
+
+  private async getNewsUrlIndex(): Promise<NewsUrlIndexEntry[] | null> {
+    const command = new GetObjectCommand({ Bucket: this.bucketName, Key: this.newsUrlIndexKey })
+    try {
+      const res = await this.client.send(command)
+      if (!res.Body) return null
+      const data = JSON.parse(await this.streamToString(res.Body))
+      if (!Array.isArray(data.entries)) return null
+      return data.entries as NewsUrlIndexEntry[]
+    } catch {
+      return null
+    }
+  }
+
+  private async putNewsUrlIndex(entries: NewsUrlIndexEntry[]): Promise<void> {
+    const command = new PutObjectCommand({
+      Bucket: this.bucketName,
+      Key: this.newsUrlIndexKey,
+      Body: JSON.stringify({ updatedAt: new Date().toISOString(), entries }, null, 2),
+      ContentType: 'application/json'
+    })
+    await this.client.send(command)
+  }
+
+  async indexReportNews(report: Report): Promise<void> {
+    const existing = await this.getNewsUrlIndex() || []
+    // удаляем все предыдущие записи об этом отчете (на случай обновления)
+    const filtered = existing.filter(e => e.reportId !== report.id)
+    const additions: NewsUrlIndexEntry[] = report.news.filter(n => n.url).map(n => ({
+      normalizedUrl: this.normalizeUrl(n.url),
+      originalUrl: n.url,
+      reportId: report.id,
+      reportTitle: report.title,
+      newsId: n.id,
+      newsTitle: n.title,
+      date: n.date instanceof Date ? n.date.toISOString() : new Date(n.date).toISOString()
+    }))
+    await this.putNewsUrlIndex([...filtered, ...additions])
+  }
+
+  async removeReportFromUrlIndex(reportId: string): Promise<void> {
+    const existing = await this.getNewsUrlIndex()
+    if (!existing) return
+    const filtered = existing.filter(e => e.reportId !== reportId)
+    await this.putNewsUrlIndex(filtered)
+  }
+
+  async findUrlDuplicates(url: string): Promise<NewsUrlIndexEntry[]> {
+    if (!url || !url.trim()) return []
+    const norm = this.normalizeUrl(url)
+    let existing = await this.getNewsUrlIndex()
+    // Если индекса нет — попробуем лениво пересобрать из имеющихся отчетов (дорого при большом числе отчетов, но одноразово)
+    if (!existing) {
+      try {
+        const list = await this.listReports()
+        const rebuilt: NewsUrlIndexEntry[] = []
+        for (const r of list) {
+          const full = await this.getReport(r.id)
+            if (full) {
+              for (const n of full.news) {
+                if (!n.url) continue
+                rebuilt.push({
+                  normalizedUrl: this.normalizeUrl(n.url),
+                  originalUrl: n.url,
+                  reportId: full.id,
+                  reportTitle: full.title,
+                  newsId: n.id,
+                  newsTitle: n.title,
+                  date: n.date instanceof Date ? n.date.toISOString() : new Date(n.date).toISOString()
+                })
+              }
+            }
+        }
+        await this.putNewsUrlIndex(rebuilt)
+        existing = rebuilt
+      } catch (e) {
+        console.warn('Не удалось лениво пересобрать индекс URL', e)
+        existing = []
+      }
+    }
+    return existing.filter(e => e.normalizedUrl === norm)
   }
 }
 

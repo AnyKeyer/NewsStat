@@ -106,6 +106,8 @@ export const useReportStore = defineStore('reports', () => {
     try {
       console.log('Сохраняем отчет в R2...')
       await r2Service.uploadReport(report)
+  // Индексируем URL новостей
+  try { await r2Service.indexReportNews(report) } catch (e) { console.warn('Не удалось обновить индекс URL новостей', e) }
       
       // Добавляем отчет в локальный список
       const reportSummary = {
@@ -137,6 +139,7 @@ export const useReportStore = defineStore('reports', () => {
       updated.updatedAt = new Date()
       console.log(`Обновляем отчет ${updated.id} в R2...`)
       await r2Service.uploadReport(updated)
+      try { await r2Service.indexReportNews(updated) } catch (e) { console.warn('Не удалось обновить индекс URL новостей', e) }
       // Обновляем в списке (если есть)
       const idx = reports.value.findIndex(r => r.id === updated.id)
       if (idx !== -1) {
@@ -167,6 +170,7 @@ export const useReportStore = defineStore('reports', () => {
     try {
       console.log(`Удаляем отчет ${reportId} из R2...`)
       await r2Service.deleteReport(reportId)
+  try { await r2Service.removeReportFromUrlIndex(reportId) } catch (e) { console.warn('Не удалось обновить индекс URL при удалении', e) }
       
       // Удаляем из локального списка
       reports.value = reports.value.filter(r => r.id !== reportId)

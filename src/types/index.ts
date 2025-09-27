@@ -48,6 +48,21 @@ export interface ReportStatistics {
   movedPercent: number
 }
 
+/**
+ * Индекс URL новостей для быстрого поиска дубликатов.
+ * normalizedUrl – канонизированная форма (lowercase, без #, без конечного слеша, урезанные utm/реф параметры).
+ */
+export interface NewsUrlIndexEntry {
+  normalizedUrl: string
+  originalUrl: string
+  reportId: string
+  reportTitle?: string
+  newsId: string
+  newsTitle: string
+  /** Время новости (ISO) */
+  date: string
+}
+
 export interface User {
   id: string
   username: string
